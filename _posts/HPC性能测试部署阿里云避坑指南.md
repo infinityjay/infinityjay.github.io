@@ -1,4 +1,7 @@
-
+---
+layout: post
+title: HPC性能测试部署阿里云避坑指南
+---
 
 # 一、Host_manage部分
 
