@@ -1,3 +1,9 @@
+---
+layout: post
+title: Docker笔记
+---
+
+
 # Docker下载安装
 
 ## Linux centos7版
@@ -38,10 +44,6 @@ systemctl start docker
 
      
 ```
-
-
-
-
 
 
 
