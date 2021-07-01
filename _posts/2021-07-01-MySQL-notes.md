@@ -1,3 +1,13 @@
+---
+layout: post
+title:  MySQL notes
+date:   2021-07-01
+author: Jay Chen
+tags:   [MySQL]
+mathjax: false
+---
+## description
+MySQL必知必会笔记
 ## 目录
 - [目录](#目录)
 - [了解SQL](#了解sql)
