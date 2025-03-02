@@ -1,8 +1,7 @@
 ---
-layout: post
+categories:
+  - Cloud Computing
 title:  MySQL notes
-date:   2021-07-01
-author: Jay Chen
 tags:   [MySQL]
 mathjax: false
 ---

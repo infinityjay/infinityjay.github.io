@@ -886,8 +886,8 @@ docker commit -m="描述信息" -a="作者" 容器id 目标镜像名:[TAG]
 ```shell
 docker run -it -v 主机目录:容器内目录
 
-#同步主机上 /ceshi 目录与容器内 /home 目录
-[root@10-9-70-238 ~]# docker run -it -v /ceshi:/home centos /bin/bash
+#同步主机上 /ceshi 目录与容器内 /_home 目录
+[root@10-9-70-238 ~]# docker run -it -v /ceshi:/_home centos /bin/bash
 
 #查看容器信息,Mounts项即为挂载信息
 [root@10-9-70-238 ~]# docker inspect 3e28dcdd7f95
@@ -935,7 +935,7 @@ $ docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:tag
 -v 数据卷挂载
 -e 环境配置（密码设置）
 --name 容器名字
-docker run -d -p 3310:3306 -v /home/mysql/conf:/etc/mysql/conf.d -v /home/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql01 mysql
+docker run -d -p 3310:3306 -v /_home/mysql/conf:/etc/mysql/conf.d -v /_home/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql01 mysql
 
 # 在本地使用mysql客户端连接测试
 # 客户端新建数据库，在宿主机挂载目录下有同步更新

@@ -3,8 +3,13 @@ layout: post
 title:  KVM虚拟化技术-笔记
 date:   2021-05-06
 author: Jay Chen
-tags:   [KVM]
 mathjax: false
+categories:
+  - Edge Case
+tags:
+  - content
+  - edge case
+  - layout
 ---
 # description
 KVM虚拟化技术简介
