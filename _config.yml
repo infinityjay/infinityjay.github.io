@@ -19,10 +19,10 @@ remote_theme: mmistakes/so-simple-theme
 
 locale: en-US
 title: "Jie Chen's blogs"
-description: "Share tech blogs and also life snapshots"
+description: "Share tech blogs and life snapshots (Travels)"
 baseurl: ""
 url: ""
-logo: "/images/so-simple-site-logo.png"
+#logo: "/images/so-simple-site-logo.png"
 date_format: "%B %-d, %Y"
 read_time: true
 words_per_minute: 150 # 200
@@ -95,7 +95,7 @@ defaults:
       share: true
       author:
         name: Jie Chen
-        picture: /images/so-simple-site-logo.png
+        picture: /images/my_photo.jpg
         email: chenjienudt@gmail.com
   # Recipe defaults
   - scope:

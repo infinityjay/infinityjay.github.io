@@ -1,12 +1,12 @@
 # Site navigation links
 #- title: Home
 #  url: /_home/
-- title: Posts
+- title: Tech blogs
   url: /posts/
 - title: Categories
   url: /categories/
 - title: Tags
   url: /tags/
-- title: Recipes
+- title: Travels
   url: /recipes/
 

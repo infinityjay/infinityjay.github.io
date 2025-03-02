@@ -1,6 +1,6 @@
 ---
 categories:
-  - Post Formats
+  - Network
 layout: post
 title:  《图解HTTP》笔记
 date:   2021-06-01
