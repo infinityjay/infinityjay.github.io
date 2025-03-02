@@ -5,20 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4b4b09a0-7812-49b6-8d3f-060d3d95e052" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/images/my_photo.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_data/navigation.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_data/navigation.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/category.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/collection.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/post.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/tag.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_posts/2021-07-01-MySQL-notes.md" beforeDir="false" afterPath="$PROJECT_DIR$/_posts/2021-07-01-MySQL-notes.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_recipes/chocolate-chip-cookies.md" beforeDir="false" afterPath="$PROJECT_DIR$/_recipes/Osaka-Japan.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_recipes/oatmeal-cookies.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/_recipes/peanut-butter-cookies.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/posts.md" beforeDir="false" afterPath="$PROJECT_DIR$/posts.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/recipes.md" beforeDir="false" afterPath="$PROJECT_DIR$/recipes.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
