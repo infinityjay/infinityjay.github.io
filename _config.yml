@@ -19,7 +19,7 @@ remote_theme: mmistakes/so-simple-theme
 
 locale: en-US
 title: "Jie Chen's blogs"
-description: "Share tech blogs and life snapshots (Travels)"
+description: "Share tech blogs and life snapshots"
 baseurl: ""
 url: ""
 #logo: "/images/so-simple-site-logo.png"

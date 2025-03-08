@@ -1,145 +1,122 @@
 ---
 layout: post
-title:  KVM虚拟化技术-笔记
+title:  KVM Virtualization Technology
 date:   2021-05-06
-author: Jay Chen
-mathjax: false
 categories:
-  - Edge Case
+  - Cloud Computing
 tags:
-  - content
-  - edge case
-  - layout
+  - KVM
+  - Learning notes
 ---
-# description
-KVM虚拟化技术简介
 
-# 目录
-- [第一章 虚拟化与云计算](#第一章-虚拟化与云计算)
-- [第一章 虚拟化与云计算](#第一章-虚拟化与云计算)
-  - [1.1 云计算概念](#11-云计算概念)
-  - [1.2 云计算技术](#12-云计算技术)
-    - [1.2.1Map/Reduce](#121mapreduce)
-  - [1.3虚拟化技术](#13虚拟化技术)
-    - [1.3.1软件虚拟化和硬件虚拟化](#131软件虚拟化和硬件虚拟化)
-  - [1.4 KVM简介](#14-kvm简介)
-  - [1.5 Xen简介](#15-xen简介)
-- [第二章 KVM原理简介](#第二章-kvm原理简介)
-  - [2.1 Linux操作系统简介](#21-linux操作系统简介)
-  - [2.2 虚拟化模型](#22-虚拟化模型)
-  - [2.3 KVM架构](#23-kvm架构)
-  - [2.4 KVM模块](#24-kvm模块)
-  - [2.5 QEMU设备模型](#25-qemu设备模型)
-- [第三章 构建KVM环境](#第三章-构建kvm环境)
-# 第一章 虚拟化与云计算
+Introduction to KVM Virtualization Technology
 
-## 1.1 云计算概念
+Content
 
-SaaS（Software as a Service，软件即服务）
+{% include toc %}
 
-PaaS（Platform as a Service，平台即服务）
+# Chapter 1 Virtualization and Cloud Computing
 
-IaaS（Infrastructure as a Service，基础设施即服务）
+## 1.1 Cloud computing concept
+
+SaaS (Software as a Service)
+
+PaaS (Platform as a Service)
+
+IaaS (Infrastructure as a Service)
 
 
 
-## 1.2 云计算技术
+## 1.2 Cloud computing technology
 
-### 1.2.1Map/Reduce
+### 1.2.1 Map/Reduce
 
-是google开发的编程模型，是一种简化的分布式编程模型和高效的任务调度模型，用于大规模数据集的并行运算。应用于分布式搜索、分布式排序、机器学习、机器翻译等，包括google公司等互联网网页搜索索引。
+It is a programming model developed by Google. It is a simplified distributed programming model and an efficient task scheduling model for parallel computing of large-scale data sets. It is used in distributed search, distributed sorting, machine learning, machine translation, etc., including Internet web search indexes such as Google.
 
-库实现：JAVA语言下的Hadoop
+Library implementation: Hadoop under JAVA language
 
-## 1.3虚拟化技术
+## 1.3 Virtualization technology
 
-### 1.3.1软件虚拟化和硬件虚拟化
+### 1.3.1 Software virtualization and hardware virtualization
 
-关键一步：虚拟化层必须能够截获计算元件对物理资源的直接访问，并将其重新定向到虚拟资源池中。
+Key step: The virtualization layer must be able to intercept the direct access of computing elements to physical resources and redirect them to the virtual resource pool.
 
-1、软件方案
+1. Software solution
 
-纯软件虚拟化，用纯软件的方法在现有的物理平台上实现对物理平台访问的截获和模拟。
+Pure software virtualization, using pure software methods to intercept and simulate access to physical platforms on existing physical platforms.
 
-QEMU，通过纯软件来仿真X86平台处理器的取指、解码和执行，客户机的指令并不在物理平台上直接执行。所有指令都是软件模拟的，因此性能往往比较差，但是可以在同一平台上模拟不同架构平台的虚拟机。
+QEMU, through pure software to simulate the instruction fetching, decoding and execution of X86 platform processors, the client's instructions are not directly executed on the physical platform. All instructions are simulated by software, so the performance is often poor, but virtual machines of different architecture platforms can be simulated on the same platform.
 
-2、硬件方案
+2. Hardware solution
 
-硬件虚拟化，物理平台本身提供了对特殊指令的截获和重定向的硬件支持，甚至新的硬件会提供额外的资源来帮助软件实现对关键硬件资源的虚拟化，从而提升性能。
+Hardware virtualization, the physical platform itself provides hardware support for intercepting and redirecting special instructions, and even new hardware will provide additional resources to help software virtualize key hardware resources, thereby improving performance.
 
-Inter VT虚拟化技术：Pentium、Core、Xeon至强，Itanium安腾
+Inter VT virtualization technology: Pentium, Core, Xeon, Itanium
 
-## 1.4 KVM简介
+## 1.4 Introduction to KVM
 
-KVM全称Kernel Virtual Machine，内核虚拟机，由以色列公司Qumranet开发。KVM没有从底层开始新写一个Hypervisor，而是选择基于Linux kernel通过夹在新的模块从而使Linux kernel本身变成一个Hypervisor，2006年10月KVM模块的源代码被正式接纳进入Linux kernel。Xen不一样，会取代内核由自身管理系统资源。
+KVM stands for Kernel Virtual Machine, developed by the Israeli company Qumranet. KVM did not write a new hypervisor from the bottom up, but chose to turn the Linux kernel itself into a hypervisor by inserting a new module based on the Linux kernel. In October 2006, the source code of the KVM module was officially accepted into the Linux kernel. Xen is different, it will replace the kernel and manage system resources by itself.
 
-在KVM架构中，虚拟机实现为常规的Linux进程，由标准Linux调度程序进行调度。KVM本身并不执行任何模拟，需要用户空间程序（QEMU）通过/dev/kvm接口设置一个客户机虚拟服务器的地址空间，向他提供模拟的I/O，并将它的视频显示映射回宿主的显示屏。
+In the KVM architecture, virtual machines are implemented as regular Linux processes and scheduled by the standard Linux scheduler. KVM itself does not perform any simulation, and requires a user space program (QEMU) to set up an address space of a client virtual server through the /dev/kvm interface, provide it with simulated I/O, and map its video display back to the host's display.
 
 ![image-20210429174649641](https://user-images.githubusercontent.com/48710834/117282972-e8905580-ae97-11eb-9548-fa393d5107c5.png)
 
+## 1.5 Introduction to Xen
 
-
-## 1.5 Xen简介
-
-Xen是一个直接在系统硬件上运行的虚拟机管理程序。Xen在系统给硬件与虚拟机之间插入一个虚拟化层，将系统硬件转换为一个逻辑计算资源池，Xen可以将其中的资源动态地分配给任何操作系统或应用程序。
+Xen is a virtual machine management program that runs directly on system hardware. Xen inserts a virtualization layer between the system hardware and virtual machines, converting the system hardware into a logical computing resource pool, in which Xen can dynamically allocate resources to any operating system or application.
 
 ![image-20210429174442599](https://user-images.githubusercontent.com/48710834/117283025-f80f9e80-ae97-11eb-9445-5255892368be.png)
 
+Xen is designed as a microkernel implementation, which is only responsible for managing processor and memory resources.
 
-Xen被设计成为微内核的实现，其本身只是负责管理处理器和内存资源。
+# Chapter 2 Introduction to KVM Principles
 
+## 2.1 Introduction to Linux Operating System
 
+Modularly designed Linux:
 
-# 第二章 KVM原理简介
+Operating system kernel design has always been divided into two camps: microkernel and single kernel;
 
-## 2.1 Linux操作系统简介
+Single kernel: The entire kernel is implemented as a single large process as a whole, and runs in a single address space at the same time. All kernel services run in such a large kernel space, and communication between kernels can be simply implemented as function calls.
 
-模块化设计的Linux：
+Microkernel: It is not implemented as a single large process. Instead, the kernel's functions are divided into multiple independent processes. Each process is called a server. Multiple weapon programs run in their own address space. Only a small number of core servers run in privileged mode. The communication between servers uses the inter-process communication mechanism.
 
-操作系统内核设计一直分为两个阵营：微内核和单内核；
+Linux adopts a pragmatic design. The Linux kernel is designed as a single kernel, while supporting modular design and the ability to dynamically load kernel modules. In addition to core kernel functions such as process switching and memory management, most kernel functions are designed and implemented as separate kernel modules. During the operation of the kernel, according to demand, it is dynamically loaded and connected to the kernel space for operation. Unused modules can also be dynamically unloaded during the operation.
 
-单内核：整个内核从整体上作为一个单独的大过程来实现，并且同时运行在一个单独的地址空间内，所有的内核服务都在这样一个大的内核空间运行，内核之间的通信可以简单的实现为函数调用。
-
-微内核：并不是作为一个单独的大过程来实现的，相反内核的功能被划分成为多个独立的过程，每一个过程叫做一个服务器，多个度武器程序都运行在自己的地址空间，只有少量的核心的服务器运行在特权模式，服务器之间的通信采用了进程间通信机制。
-
-Linux采用了实用主义的设计，Linux内核被设计成单内核，同时支持模块化设计及动态装载内核模块的能力。除了诸如进程切换、内存管理等核心的内核功能，将大部分内核功能作为单独的内核模块设计并实现。内核在运行过程中，按照需求，动态的加载并连接进入内核空间运行，不使用的模块还可以在运行的过程中动态的卸载。
-
-## 2.2 虚拟化模型
+## 2.2 Virtualization model
 
 ![image-20210429180256129](https://user-images.githubusercontent.com/48710834/117283106-0cec3200-ae98-11eb-9816-8d8a46b89393.png)
 
+Hypervisor can also be called VMM (virtual machine monitor), which runs on the physical system, manages the real physical hardware platform, and provides a corresponding virtual hardware platform for each virtual client.
 
-Hypervisor也可以称为VMM（virtual machine monitor），虚拟机监视器，在物理系统之上运行，管理真是的物理硬件平台，并为每个虚拟客户机提供对应虚拟硬件平台。
+## 2.3 KVM architecture
 
-## 2.3 KVM架构
+The basic architecture of virtual machines is divided into two types:
 
-虚拟机基本架构分为两种：
+Type 1: After the system is powered on, the virtual machine monitor is first loaded and run, and the traditional operating system runs in the virtual machine it creates. In a sense, it can be regarded as the operating system kernel. Typical examples are Xen, VMware's ESX/ESXi and Microsoft's Hyper-V.
 
-类型一：在系统上电之后首先加载运行虚拟机监控程序，传统的操作系统运行在其创建的虚拟机中。从某种意义上说，可以视为操作系统内核，典型例子就是Xen、VMware的ESX/ESXi和微软的Hyper-V。
-
-类型二：在系统上电之后仍然运行一般意义上的操作系统，虚拟机监控程序作为特殊的应用程序，可以视作操作系统功能的扩展。典型例子就是KVM、VMware Workstation、VirtualBox。
+Type 2: After the system is powered on, the general operating system is still running. The virtual machine monitor, as a special application, can be regarded as an extension of the operating system function. Typical examples are KVM, VMware Workstation, and VirtualBox.
 
 ![image-20210429181440975](https://user-images.githubusercontent.com/48710834/117283058-01990680-ae98-11eb-8fe6-aaa7932f7d01.png)
 
+KVM itself does not perform any device simulation. It is loaded into the kernel space on demand during runtime.
 
-KVM本身并不执行任何设备模拟，在运行时按需加载进入内核空间运行。
+## 2.4 KVM module
 
-## 2.4 KVM模块
+The KVM module is the core part of the KVM virtual machine. Its main function is to initialize the CPU hardware, turn on the virtualization mode, and then run the virtual client in the virtual machine mode, and provide certain support for the operation of the virtual client.
 
-KVM模块是KVM虚拟机的核心部分，其主要功能是初始化CPU硬件，打开虚拟化模式，然后将虚拟客户机运行在虚拟机模式下，并对虚拟客户机的运行提供一定的支持。
+The communication interface between the KVM module and the user space QEMU is mainly a series of IOCTL calls for special device files.
 
-KVM模块与用户空间QEMU的通信接口主要是一系列针对特殊设备文件的IOCTL调用。
+Creating a virtual machine: The most important IOCTL call for the /dev/kvm file can be understood as KVM creating the corresponding kernel data structure for a specific virtual client. At the same time, KVM will also return a file handle to represent the created virtual machine. Then you can create a mapping relationship between the user space virtual address and the client physical address and the real memory physical address, etc.
 
-创建虚拟机：针对/dev/kvm文件最重要的IOCTL调用，可以理解为KVM为了某个特定的虚拟客户机创建对应的内核数据结构，同时KVM还会返回一个文件句柄来代表所创建的虚拟机。而后可以创建用户空间虚拟地址和客户机物理地址以及真实内存物理地址的映射关系等等。
+Executing the virtual processor: The virtual machine prepared by the user space is placed in the non-root mode in the virtualization mode with the support of the KVM module and starts to execute binary instructions.
 
-执行虚拟处理器：用户空间准备好的虚拟机在KVM模块的支持下，被置于虚拟化模式中的非根模式下，开始执行二进制指令。
+Memory virtualization: The virtual address of the client program is converted into the client physical address and then into the real physical address. KVM uses shadow page tables to solve this problem. The shadow page table is complex to implement and sometimes has a large overhead. A secondary page table can also be introduced, which is called a two-dimensional paging mechanism.
 
-内存虚拟化：客户机程序的虚拟地址转化成客户机物理地址再转化成真实物理地址。KVM使用影子页表解决这个问题，影子页表实现复杂有时候开销很大。也可以引入二级页表，称为二维分页机制。
+## 2.5 QEMU device model
 
-## 2.5 QEMU设备模型
+The QEMU virtual machine is a pure software implementation with low performance, but its advantage is that the function of the virtual machine can be realized on a platform that supports the compilation and operation of QEMU itself, and the virtual machine can be on a different architecture from the host machine. The QEMU code contains a complete set of virtual machine implementations, including processor virtualization, memory virtualization, and virtual device simulation used by KVM.
 
-QEMU虚拟机是一个纯软件的实现，性能低下，但是其优点是在支持QEMU本身编译运行的平台上就可以实现虚拟机的功能，虚拟机可以与宿主机不是同一个架构。QEMU的代码中有整套的虚拟机实现，包括处理器虚拟化、内存虚拟化以及KVM使用到的虚拟设备模拟。
+During the operation of the virtual machine, QEMU will enter the kernel through the system call provided by the KVM module. The KVM module is responsible for putting the virtual machine into a special mode of the processor. When the virtual machine performs input and output operations, the KVM module will return to QEMU from the last system call exit, and QEMU will be responsible for parsing and simulating these devices. From the perspective of QEMU, it can also be said that QEMU uses the virtualization function of the KVM module to provide hardware virtualization acceleration for its own virtual machines, thereby greatly improving the performance of the virtual machine.
 
-虚拟机运行期间，QEMU会通过KVM模块提供的系统调用进入内核，由KVM模块负责将虚拟机置于处理器的特殊模式运行，遇到虚拟机进行输入输出操作，KVM模块会从上次的系统调用出口处返回QEMU，由QEMU来负责解析和模拟这些设备。从QEMU的角度来看，也可以说QEMU使用了KVM模块的虚拟化功能，为自己的虚拟机提供硬件虚拟化的加速，从而极大的提高了虚拟机的性能。
-
-# 第三章 构建KVM环境
+# Chapter 3 Building a KVM environment
