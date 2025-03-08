@@ -1,8 +1,8 @@
 ---
 title: Travels
 layout: collection
-permalink: /recipes/
-collection: recipes
+permalink: /travels/
+collection: travels
 entries_layout: grid
 ---
 

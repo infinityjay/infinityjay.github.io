@@ -79,7 +79,7 @@ plugins:
 
 # Collections
 collections:
-  recipes:
+  travels:
     output: true
     permalink: /:collection/:path/
 
@@ -99,8 +99,8 @@ defaults:
         email: chenjienudt@gmail.com
   # Recipe defaults
   - scope:
-      path: "_recipes"
-      type: recipes
+      path: "_travels"
+      type: travels
     values:
       layout: post
       comments: false
