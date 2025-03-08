@@ -20,7 +20,7 @@ Content
 
 `kubectl --kubeconfig ~/.kube/config-c2 edit deployment ping-test -n prj-ipdd-test`
 
-#config
+# config
 
 * view the current config
 
@@ -32,7 +32,7 @@ Content
 
 
 
-#pod
+# pod
 
 * view CPU and memory usage
 

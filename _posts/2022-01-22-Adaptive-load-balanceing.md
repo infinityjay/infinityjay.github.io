@@ -6,6 +6,12 @@ tags:
   - Load balance
   - API gateway
   - Patent
+  - Project experience
+  - Distributed system
+  - Redis
+  - Lua
+  - Prometheus
+  - Grafana
 
 ---
 Content
