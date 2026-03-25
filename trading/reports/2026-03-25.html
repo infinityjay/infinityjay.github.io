@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>三重过滤交易信号 — 2026-03-25</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", "PingFang SC", Arial, sans-serif;
+    background: #f1f5f9;
+    color: #111827;
+    padding: 20px 16px 60px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; color: #0f172a; }
+  .header .meta { color: #64748b; font-size: 13px; margin-top: 5px; }
+  .header .nav { margin-top: 12px; }
+  .header .nav a {
+    color: #3b82f6; text-decoration: none; font-size: 13px; font-weight: 500;
+  }
+  .header .nav a:hover { text-decoration: underline; }
+
+  /* Summary cards */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  .card-num { font-size: 28px; font-weight: 700; line-height: 1; }
+  .card-lbl { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .card-green .card-num { color: #15803d; }
+  .card-red   .card-num { color: #b91c1c; }
+  .card-amber .card-num { color: #b45309; }
+  .card-gray  .card-num { color: #374151; }
+
+  /* Group label */
+  .group-label {
+    font-size: 13px; font-weight: 600; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin: 24px 0 8px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+  th {
+    background: #f8fafc;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  .ticker-cell { min-width: 120px; }
+  .ticker { font-weight: 700; font-size: 14px; display: block; }
+  .name { font-size: 12px; color: #94a3b8; display: block; margin-top: 1px; }
+
+  /* Legend */
+  .legend {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 18px 22px;
+    margin-top: 24px;
+  }
+  .legend-title { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 10px; }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    font-size: 13px;
+    color: #4b5563;
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    .legend-grid { grid-template-columns: 1fr; }
+    body { padding: 12px 10px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>三重过滤交易信号</h1>
+    <div class="meta">
+      报表日期：2026-03-25 &nbsp;|&nbsp; 生成时间：2026-03-25 21:30
+      &nbsp;|&nbsp; 基于 Alexander Elder《以交易为生》三重过滤系统
+    </div>
+    <div class="nav"><a href="../index.html">← 返回历史报表列表</a></div>
+  </div>
+
+  
+    <div class="summary-row">
+      <div class="card card-green"><div class="card-num">1</div><div class="card-lbl">买入信号</div></div>
+      <div class="card card-red"><div class="card-num">0</div><div class="card-lbl">卖出信号</div></div>
+      <div class="card card-amber"><div class="card-num">7</div><div class="card-lbl">关注标的</div></div>
+      <div class="card card-gray"><div class="card-num">48</div><div class="card-lbl">监控总数</div></div>
+    </div>
+  
+        <div class="group-label">大盘ETF</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">SPY</span>
+                <span class="name">S&P 500 ETF</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#c2410c;background:#fff7ed;border:1px solid #fdba74">关注做空</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:33%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">32.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:27%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">27.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$656.82</td>
+              <td style="font-family:monospace;color:#6b7280">$667.51</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">QQQ</span>
+                <span class="name">Nasdaq 100 ETF</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:29%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">28.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:25%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">25.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$587.82</td>
+              <td style="font-family:monospace;color:#6b7280">$597.55</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">半导体</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">NVDA</span>
+                <span class="name">NVIDIA</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:41%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">40.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:28%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">27.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$178.68</td>
+              <td style="font-family:monospace;color:#6b7280">$180.89</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">AMD</span>
+                <span class="name">AMD</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:97%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">96.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:82%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">81.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$220.27</td>
+              <td style="font-family:monospace;color:#6b7280">$204.3</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">AVGO</span>
+                <span class="name">Broadcom</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:25%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">24.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:27%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">27.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$318.81</td>
+              <td style="font-family:monospace;color:#6b7280">$324.19</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">TSM</span>
+                <span class="name">Taiwan Semiconductor</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:72%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">72.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:55%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">54.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$347.75</td>
+              <td style="font-family:monospace;color:#6b7280">$346.06</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">ASML</span>
+                <span class="name">ASML Holding</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:86%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">85.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:82%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">82.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$1393.89</td>
+              <td style="font-family:monospace;color:#6b7280">$1380.48</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">MU</span>
+                <span class="name">Micron Technology</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:22%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">21.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:32%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">32.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$382.09</td>
+              <td style="font-family:monospace;color:#6b7280">$412.56</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">INTC</span>
+                <span class="name">Intel</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d">关注做多</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:74%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">73.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:46%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">45.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$47.18</td>
+              <td style="font-family:monospace;color:#6b7280">$45.43</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">ARM</span>
+                <span class="name">Arm Holdings</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:86%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">86.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:86%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">85.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$157.07</td>
+              <td style="font-family:monospace;color:#6b7280">$128.16</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">SMCI</span>
+                <span class="name">Super Micro Computer</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#c2410c;background:#fff7ed;border:1px solid #fdba74">关注做空</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:34%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">33.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:23%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">22.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$24.05</td>
+              <td style="font-family:monospace;color:#6b7280">$28.62</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">大型科技</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">AAPL</span>
+                <span class="name">Apple</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:40%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">40.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:34%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">33.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$252.62</td>
+              <td style="font-family:monospace;color:#6b7280">$256.37</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">MSFT</span>
+                <span class="name">Microsoft</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:3%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">3.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:5%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">4.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$371.04</td>
+              <td style="font-family:monospace;color:#6b7280">$394.91</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">GOOG</span>
+                <span class="name">Alphabet</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:9%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">9.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:14%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">13.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$289.59</td>
+              <td style="font-family:monospace;color:#6b7280">$303.59</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">META</span>
+                <span class="name">Meta Platforms</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:10%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">10.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:12%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">12.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$594.89</td>
+              <td style="font-family:monospace;color:#6b7280">$626.29</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">AMZN</span>
+                <span class="name">Amazon</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:57%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">56.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:37%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">37.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$211.71</td>
+              <td style="font-family:monospace;color:#6b7280">$211.35</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">TSLA</span>
+                <span class="name">Tesla</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:41%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">41.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:36%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">36.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$385.95</td>
+              <td style="font-family:monospace;color:#6b7280">$395.01</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">ORCL</span>
+                <span class="name">Oracle</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:5%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">5.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:13%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">13.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$146.02</td>
+              <td style="font-family:monospace;color:#6b7280">$153.23</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">AI与软件</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">PLTR</span>
+                <span class="name">Palantir</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d">关注做多</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:46%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">46.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:62%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">62.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$154.96</td>
+              <td style="font-family:monospace;color:#6b7280">$151.43</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">APP</span>
+                <span class="name">Applovin</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:20%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">19.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:27%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">26.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$436.69</td>
+              <td style="font-family:monospace;color:#6b7280">$453.18</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">CRWD</span>
+                <span class="name">CrowdStrike</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:3%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">3.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:18%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">17.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$385.86</td>
+              <td style="font-family:monospace;color:#6b7280">$415.0</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">SNOW</span>
+                <span class="name">Snowflake</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:9%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">8.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:20%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">19.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$160.61</td>
+              <td style="font-family:monospace;color:#6b7280">$173.19</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">MDB</span>
+                <span class="name">MongoDB</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#c2410c;background:#fff7ed;border:1px solid #fdba74">关注做空</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:15%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">15.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:36%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">36.1</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$246.54</td>
+              <td style="font-family:monospace;color:#6b7280">$281.33</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">SHOP</span>
+                <span class="name">Shopify</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:19%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">19.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:18%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">18.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$118.42</td>
+              <td style="font-family:monospace;color:#6b7280">$123.68</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">DUOL</span>
+                <span class="name">Duolingo</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:36%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">36.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:35%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">34.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$99.12</td>
+              <td style="font-family:monospace;color:#6b7280">$103.44</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">NBIS</span>
+                <span class="name">Nebius Group</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d">关注做多</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:62%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">62.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:62%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">61.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$115.09</td>
+              <td style="font-family:monospace;color:#6b7280">$108.74</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">TEM</span>
+                <span class="name">Tempus AI</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:8%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">8.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:28%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">28.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$46.76</td>
+              <td style="font-family:monospace;color:#6b7280">$51.13</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">RKLB</span>
+                <span class="name">Rocket Lab</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d">关注做多</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:59%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">59.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:29%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">28.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$72.88</td>
+              <td style="font-family:monospace;color:#6b7280">$70.83</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">CRWV</span>
+                <span class="name">CoreWeave</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:94%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">93.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:76%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">75.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$87.58</td>
+              <td style="font-family:monospace;color:#6b7280">$83.4</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">ACN</span>
+                <span class="name">Accenture</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:17%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">16.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:26%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">26.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$192.29</td>
+              <td style="font-family:monospace;color:#6b7280">$205.19</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">流媒体与消费</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">NFLX</span>
+                <span class="name">Netflix</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#15803d;background:#f0fdf4;border:1px solid #86efac">买入</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:17%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">17.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:16%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">16.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$92.28</td>
+              <td style="font-family:monospace;color:#6b7280">$91.98</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">BABA</span>
+                <span class="name">Alibaba</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:48%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">48.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:33%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">33.1</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$129.87</td>
+              <td style="font-family:monospace;color:#6b7280">$135.95</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">NKE</span>
+                <span class="name">Nike</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:15%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">14.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:14%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">13.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$52.98</td>
+              <td style="font-family:monospace;color:#6b7280">$56.21</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">WMT</span>
+                <span class="name">Walmart</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:57%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">56.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:43%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">43.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$123.06</td>
+              <td style="font-family:monospace;color:#6b7280">$123.51</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">金融</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">JPM</span>
+                <span class="name">JPMorgan Chase</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:88%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">88.0</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:66%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">65.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$295.42</td>
+              <td style="font-family:monospace;color:#6b7280">$293.11</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">BRK-B</span>
+                <span class="name">Berkshire Hathaway B</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:2%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">1.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:5%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">4.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$476.19</td>
+              <td style="font-family:monospace;color:#6b7280">$488.02</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">SCHW</span>
+                <span class="name">Charles Schwab</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:72%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">71.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:76%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">76.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$94.99</td>
+              <td style="font-family:monospace;color:#6b7280">$94.89</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">IBKR</span>
+                <span class="name">Interactive Brokers</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:80%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">79.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:59%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">59.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$68.68</td>
+              <td style="font-family:monospace;color:#6b7280">$68.82</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">C</span>
+                <span class="name">Citigroup</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:88%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">88.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:88%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">88.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$114.48</td>
+              <td style="font-family:monospace;color:#6b7280">$110.79</td>
+              <td style="text-align:center">✅</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">医疗与生物</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">LLY</span>
+                <span class="name">Eli Lilly</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:18%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">17.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:11%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">11.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$916.31</td>
+              <td style="font-family:monospace;color:#6b7280">$964.86</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">NVO</span>
+                <span class="name">Novo Nordisk</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:4%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">4.1</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:14%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">13.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$36.33</td>
+              <td style="font-family:monospace;color:#6b7280">$39.35</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">UNH</span>
+                <span class="name">UnitedHealth Group</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:16%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">15.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:13%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">13.1</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$270.55</td>
+              <td style="font-family:monospace;color:#6b7280">$281.48</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">PFE</span>
+                <span class="name">Pfizer</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:69%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">68.6</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:51%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">51.3</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$27.28</td>
+              <td style="font-family:monospace;color:#6b7280">$26.99</td>
+              <td style="text-align:center">✅</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">TMO</span>
+                <span class="name">Thermo Fisher</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:58%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">58.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:47%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">47.4</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$490.77</td>
+              <td style="font-family:monospace;color:#6b7280">$494.53</td>
+              <td style="text-align:center">❌</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">能源</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">CVX</span>
+                <span class="name">Chevron</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:81%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">80.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:89%;height:100%;background:#ef4444;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">89.2</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$205.15</td>
+              <td style="font-family:monospace;color:#6b7280">$194.72</td>
+              <td style="text-align:center">✅</td>
+            </tr></tbody>
+        </table>
+        </div>
+        <div class="group-label">加密货币相关</div>
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>股票</th>
+            <th>信号</th>
+            <th>周线趋势</th>
+            <th>MACD看涨</th>
+            <th>Stoch K</th>
+            <th>Stoch D</th>
+            <th>收盘价</th>
+            <th>日线EMA22</th>
+            <th>价格&gt;EMA</th>
+          </tr></thead>
+          <tbody><tr>
+              <td class="ticker-cell">
+                <span class="ticker">COIN</span>
+                <span class="name">Coinbase</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:10%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">9.8</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:20%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">19.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$181.1</td>
+              <td style="font-family:monospace;color:#6b7280">$192.56</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">CRCL</span>
+                <span class="name">Circle</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#6d28d9;background:#f5f3ff;border:1px solid #c4b5fd">谨慎多头</span></td>
+              <td><span style="color:#15803d;font-weight:600">▲ UP</span></td>
+              <td style="text-align:center">❌</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:14%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">14.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:32%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">31.5</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$103.86</td>
+              <td style="font-family:monospace;color:#6b7280">$107.1</td>
+              <td style="text-align:center">❌</td>
+            </tr><tr>
+              <td class="ticker-cell">
+                <span class="ticker">MSTR</span>
+                <span class="name">MicroStrategy</span>
+              </td>
+              <td><span style="display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#4b5563;background:#f9fafb;border:1px solid #d1d5db">中性</span></td>
+              <td><span style="color:#b91c1c;font-weight:600">▼ DOWN</span></td>
+              <td style="text-align:center">✅</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:36%;height:100%;background:#f59e0b;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">35.9</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">K</span></td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:30%;height:100%;background:#22c55e;border-radius:3px"></div></div><span style="font-family:monospace;font-size:13px">29.7</span></div><span style="color:#9ca3af;font-size:11px;margin-left:2px">D</span></td>
+              <td style="font-family:monospace">$139.13</td>
+              <td style="font-family:monospace;color:#6b7280">$138.59</td>
+              <td style="text-align:center">✅</td>
+            </tr></tbody>
+        </table>
+        </div>
+  
+    <div class="legend">
+      <div class="legend-title">信号说明（三重过滤规则）</div>
+      <div class="legend-grid">
+        <div><span style="color:#15803d;font-weight:600">买入</span>：周线趋势向上 + MACD看涨 + KD超卖后K上穿D</div>
+        <div><span style="color:#b91c1c;font-weight:600">卖出</span>：周线趋势向下 + MACD看跌 + KD超买后K下穿D</div>
+        <div><span style="color:#b45309;font-weight:600">关注做多</span>：趋势向上 + MACD看涨，等待回调入场</div>
+        <div><span style="color:#c2410c;font-weight:600">关注做空</span>：趋势向下 + MACD看跌，等待反弹做空</div>
+      </div>
+    </div>
+
+</div>
+</body>
+</html>
