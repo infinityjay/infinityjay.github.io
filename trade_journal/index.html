@@ -268,6 +268,7 @@
   <div id="panel-settings" class="panel">
     <div class="form-card">
       <div class="form-title">账户设置</div>
+      <div id="settingsSyncAlert"></div>
       <div class="form-grid" style="max-width:400px">
         <div class="form-group"><label>总资金 ($)</label><input type="number" id="s_total" placeholder="114000" oninput="saveSettings()"></div>
         <div class="form-group"><label>单笔止损上限 (%)</label><input type="number" id="s_singleStop" value="2" step="0.1" oninput="saveSettings()"></div>
@@ -306,12 +307,17 @@
 const APP_CONFIG = {
   supabaseUrl: 'https://doimcpmpfkzlmyzlyhot.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW1jcG1wZmt6bG15emx5aG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTc5NTAsImV4cCI6MjA5MDQ3Mzk1MH0.5Ial5fjTofMgF8aeQn_fnD7SEwE_QjH7B3504XQfwRg',
-  tableName: 'trades'
+  tableName: 'trades',
+  settingsTableName: 'trade_settings'
 };
 
 const DB_TABLE = (APP_CONFIG.tableName || 'trades').trim();
+const SETTINGS_TABLE = (APP_CONFIG.settingsTableName || 'trade_settings').trim();
+const SETTINGS_ROW_ID = 1;
 let sbClient = null, trades = [], editingId = null;
-let settings = readStoredJson('tradeSettings', {});
+let settings = normalizeSettings(readStoredJson('tradeSettings', {}));
+let settingsTableReady = false;
+let settingsSaveTimer = null;
 
 function safeStorageGet(key) {
   try { return localStorage.getItem(key); }
@@ -390,6 +396,49 @@ function getNumberInputValue(id) {
   return el ? parseNumberValue(el.value) : null;
 }
 
+function normalizeSettings(source = {}) {
+  return {
+    total: parseNumberValue(source.total) ?? 0,
+    singleStop: parseNumberValue(source.singleStop) ?? 2,
+    monthStop: parseNumberValue(source.monthStop) ?? 6,
+    month: String(source.month || new Date().toISOString().slice(0,7))
+  };
+}
+
+function cacheSettings() {
+  safeStorageSet('tradeSettings', JSON.stringify(settings));
+}
+
+function settingsRowToState(row) {
+  return normalizeSettings({
+    total: row?.total,
+    singleStop: row?.single_stop,
+    monthStop: row?.month_stop,
+    month: row?.report_month
+  });
+}
+
+function settingsStateToRow() {
+  return {
+    id: SETTINGS_ROW_ID,
+    total: settings.total,
+    single_stop: settings.singleStop,
+    month_stop: settings.monthStop,
+    report_month: settings.month,
+    updated_at: new Date().toISOString()
+  };
+}
+
+function setSettingsSyncStatus(type, message) {
+  const el = document.getElementById('settingsSyncAlert');
+  if (!el) return;
+  if (!message) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `<div class="alert alert-${type}">${escapeHtml(message)}</div>`;
+}
+
 function withTimeout(promise, ms, message) {
   return Promise.race([
     promise,
@@ -436,6 +485,10 @@ async function initSupabase() {
     setDbStatus(true);
     setView('app');
     initUI();
+    loadSettingsFromDb().catch((err) => {
+      console.error(err);
+      setSettingsSyncStatus('warn', err.message || String(err));
+    });
     loadTrades().catch((err) => {
       console.error(err);
       showAlert('tradeAlertZone', '读取交易记录失败：' + (err.message || err), 'danger');
@@ -510,9 +563,58 @@ function toRow(t) {
 }
 
 // ── Settings ─────────────────────────────────────────────────
-function getSettings() {
-  return { total:parseFloat(settings.total)||0, singleStop:parseFloat(settings.singleStop)||2, monthStop:parseFloat(settings.monthStop)||6, month:settings.month||new Date().toISOString().slice(0,7) };
+async function loadSettingsFromDb() {
+  const { data, error } = await withTimeout(
+    sbClient.from(SETTINGS_TABLE).select('*').eq('id', SETTINGS_ROW_ID).maybeSingle(),
+    10000,
+    '读取设置超时'
+  );
+  if (error) {
+    settingsTableReady = false;
+    setSettingsSyncStatus('warn', `未能从 Supabase 读取设置。请确认已创建 ${SETTINGS_TABLE} 表；当前先使用浏览器缓存。`);
+    return;
+  }
+  settingsTableReady = true;
+  if (data) {
+    settings = settingsRowToState(data);
+    cacheSettings();
+    loadSettingsUI();
+    refreshAll();
+    setSettingsSyncStatus('ok', '设置已从 Supabase 同步');
+    return;
+  }
+  setSettingsSyncStatus('warn', `已连接 Supabase，但 ${SETTINGS_TABLE} 里还没有设置记录；首次修改时会自动保存。`);
 }
+
+function getSettings() {
+  return normalizeSettings(settings);
+}
+function scheduleSettingsSave() {
+  if (settingsSaveTimer) clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(() => {
+    persistSettingsToDb();
+  }, 500);
+}
+
+async function persistSettingsToDb() {
+  if (!sbClient) return;
+  try {
+    const { error } = await withTimeout(
+      sbClient.from(SETTINGS_TABLE).upsert(settingsStateToRow(), { onConflict: 'id' }),
+      10000,
+      '保存设置超时'
+    );
+    if (error) throw error;
+    settingsTableReady = true;
+    cacheSettings();
+    setSettingsSyncStatus('ok', '设置已保存到 Supabase');
+  } catch (error) {
+    settingsTableReady = false;
+    cacheSettings();
+    setSettingsSyncStatus('warn', `设置未写入 Supabase。请确认已创建 ${SETTINGS_TABLE} 表；当前先保存在浏览器。`);
+  }
+}
+
 function saveSettings() {
   const totalValue = getNumberInputValue('s_total');
   const singleStopValue = getNumberInputValue('s_singleStop');
@@ -521,8 +623,10 @@ function saveSettings() {
   settings.singleStop=singleStopValue ?? 2;
   settings.monthStop=monthStopValue ?? 6;
   settings.month=document.getElementById('s_month').value||settings.month;
-  safeStorageSet('tradeSettings',JSON.stringify(settings));
+  cacheSettings();
   refreshAll();
+  setSettingsSyncStatus('warn', settingsTableReady ? '正在同步设置到 Supabase…' : '正在尝试保存设置到 Supabase…');
+  scheduleSettingsSave();
 }
 function loadSettingsUI() {
   const s=getSettings();
@@ -780,8 +884,9 @@ async function clearAll() {
 function initUI() {
   document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('f_buyDate').value=new Date().toISOString().slice(0,10);
-  if(!settings.month){settings.month=new Date().toISOString().slice(0,7);safeStorageSet('tradeSettings',JSON.stringify(settings));}
+  if(!settings.month){settings.month=new Date().toISOString().slice(0,7);cacheSettings();}
   loadSettingsUI();
+  setSettingsSyncStatus('warn', `设置将同步到 Supabase 表 ${SETTINGS_TABLE}`);
   document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
   document.getElementById('tradeBody').addEventListener('click', function (e) {
     const deleteBtn = e.target.closest('.delete-trade-btn');
