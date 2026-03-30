@@ -43,6 +43,9 @@
   .form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
   .form-group { display:flex; flex-direction:column; gap:6px; }
   .form-group.full { grid-column:1/-1; } .form-group.half { grid-column:span 2; }
+  .inline-action { display:flex; gap:8px; align-items:stretch; }
+  .inline-action input { flex:1; }
+  .inline-action .btn { padding:10px 14px; white-space:nowrap; }
   label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'Space Mono',monospace; }
   input, select, textarea { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 12px; font-size:14px; font-family:'Noto Sans SC',sans-serif; border-radius:2px; outline:none; transition:border-color .2s; width:100%; }
   input:focus, select:focus, textarea:focus { border-color:var(--accent); }
@@ -163,9 +166,9 @@
 <div class="fund-banner">
   <div class="fund-item"><span class="fund-label">总资金</span><span class="fund-value accent" id="bannerTotal">$0</span></div>
   <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label">单笔止损 (2%)</span><span class="fund-value" id="banner2pct" style="color:var(--yellow)">$0</span></div>
+  <div class="fund-item"><span class="fund-label" id="banner2pctLabel">单笔止损 (2%)</span><span class="fund-value" id="banner2pct" style="color:var(--yellow)">$0</span></div>
   <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label">月度止损 (6%)</span><span class="fund-value" id="banner6pct" style="color:var(--red)">$0</span></div>
+  <div class="fund-item"><span class="fund-label" id="banner6pctLabel">月度止损 (6%)</span><span class="fund-value" id="banner6pct" style="color:var(--red)">$0</span></div>
   <div class="fund-divider"></div>
   <div class="fund-item"><span class="fund-label">已用月度止损</span><span class="fund-value" id="bannerUsed">$0</span></div>
   <div class="fund-divider"></div>
@@ -210,10 +213,11 @@
   <div id="panel-add" class="panel">
     <div id="addAlert"></div>
     <div class="computed-card">
-      <div class="computed-item"><span class="computed-label">最大可损 (2%)</span><span class="computed-val" id="cMaxLoss">—</span></div>
+      <div class="computed-item"><span class="computed-label" id="cMaxLossLabel">最大可损 (2%)</span><span class="computed-val" id="cMaxLoss">—</span></div>
       <div class="computed-item"><span class="computed-label">止损幅度</span><span class="computed-val" id="cStopPct">—</span></div>
-      <div class="computed-item"><span class="computed-label">建议最大持仓</span><span class="computed-val" id="cMaxPos">—</span></div>
+      <div class="computed-item"><span class="computed-label">建议买入股数</span><span class="computed-val" id="cMaxPos">—</span></div>
       <div class="computed-item"><span class="computed-label">占用止损额度</span><span class="computed-val" id="cUsedStop">—</span></div>
+      <div class="computed-item"><span class="computed-label">目标价</span><span class="computed-val" id="cTargetPrice">—</span></div>
       <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val" id="cBuyRating">—</span></div>
     </div>
     <div class="form-card">
@@ -221,16 +225,20 @@
       <div class="form-grid">
         <div class="form-group"><label>股票代码 *</label><input type="text" id="f_stock" placeholder="AMZN" oninput="computeFields()" style="text-transform:uppercase"></div>
         <div class="form-group"><label>买入价 *</label><input type="number" id="f_buyPrice" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
+        <div class="form-group"><label>止损价 *</label><input type="number" id="f_stopLoss" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
+        <div class="form-group">
+          <label>股数 *</label>
+          <div class="inline-action">
+            <input type="number" id="f_shares" placeholder="100" oninput="computeFields()">
+            <button class="btn btn-ghost" id="fillSharesBtn" type="button" onclick="applyRecommendedShares()" disabled>使用建议值</button>
+          </div>
+        </div>
         <div class="form-group"><label>买入日期</label><input type="date" id="f_buyDate"></div>
         <div class="form-group"><label>买入日最高价</label><input type="number" id="f_dayHigh" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
         <div class="form-group"><label>买入日最低价</label><input type="number" id="f_dayLow" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group"><label>止损价 *</label><input type="number" id="f_stopLoss" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
         <div class="form-group"><label>止损理由</label><input type="text" id="f_stopReason" placeholder="前低次低点"></div>
-        <div class="form-group"><label>盈利目标价</label><input type="number" id="f_target" placeholder="0.00" step="0.001"></div>
-        <div class="form-group"><label>目标比例</label><input type="number" id="f_targetPct" placeholder="0.10" step="0.01"></div>
-        <div class="form-group"><label>股数 *</label><input type="number" id="f_shares" placeholder="100" oninput="computeFields()"></div>
-        <div class="form-group"><label>通道高点</label><input type="number" id="f_chanHigh" placeholder="0.00" step="0.001"></div>
-        <div class="form-group"><label>通道低点</label><input type="number" id="f_chanLow" placeholder="0.00" step="0.001"></div>
+        <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="f_targetPct" placeholder="10" step="0.1" oninput="computeFields()"></div>
+        <div class="form-group"><label>盈利目标价</label><input type="number" id="f_target" placeholder="自动计算" step="0.001" readonly></div>
       </div>
     </div>
     <div class="form-card">
@@ -244,10 +252,17 @@
       </div>
     </div>
     <div class="form-card">
+      <div class="form-title">后续补充（可后续填写 / 编辑）</div>
+      <div class="form-grid">
+        <div class="form-group"><label>通道高点</label><input type="number" id="f_chanHigh" placeholder="0.00" step="0.001"></div>
+        <div class="form-group"><label>通道低点</label><input type="number" id="f_chanLow" placeholder="0.00" step="0.001"></div>
+      </div>
+    </div>
+    <div class="form-card">
       <div class="form-title">佣金 & 复盘</div>
       <div class="form-grid">
-        <div class="form-group"><label>买入佣金 ($)</label><input type="number" id="f_buyComm" placeholder="-1.00" step="0.01"></div>
-        <div class="form-group"><label>卖出佣金 ($)</label><input type="number" id="f_sellComm" placeholder="-1.00" step="0.01"></div>
+        <div class="form-group"><label>买入佣金 ($)</label><input type="number" id="f_buyComm" placeholder="1.00" step="0.01" min="0"></div>
+        <div class="form-group"><label>卖出佣金 ($)</label><input type="number" id="f_sellComm" placeholder="1.00" step="0.01" min="0"></div>
         <div class="form-group half"><label>操作复盘</label><textarea id="f_review" placeholder="记录本次交易的问题与经验..."></textarea></div>
       </div>
     </div>
@@ -394,6 +409,100 @@ function parseNumberValue(value) {
 function getNumberInputValue(id) {
   const el = document.getElementById(id);
   return el ? parseNumberValue(el.value) : null;
+}
+
+function parseTargetPctInput(value) {
+  const pct = parseNumberValue(value);
+  if (pct === null) return null;
+  if (pct < 0) return null;
+  return pct;
+}
+
+function normalizeStoredTargetPctValue(value) {
+  const pct = parseNumberValue(value);
+  if (pct === null) return null;
+  if (pct < 0) return null;
+  if (pct > 0 && pct < 1) return pct * 100;
+  return pct;
+}
+
+function getRiskPerShare(buyPrice, stopLoss) {
+  if (buyPrice === null || stopLoss === null) return null;
+  const risk = buyPrice - stopLoss;
+  return risk > 0 ? risk : null;
+}
+
+function getRecommendedShares(maxLoss, buyPrice, stopLoss) {
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  if (riskPerShare === null || !maxLoss || maxLoss <= 0) return null;
+  const shares = Math.floor(maxLoss / riskPerShare);
+  return shares > 0 ? shares : 0;
+}
+
+function getTargetPrice(buyPrice, targetPct) {
+  if (buyPrice === null) return null;
+  const pct = parseTargetPctInput(targetPct);
+  if (pct === null) return null;
+  return buyPrice * (1 + pct / 100);
+}
+
+function getCommissionValue(value, fallback = 0) {
+  const parsed = parseNumberValue(value);
+  if (parsed === null) return fallback;
+  return Math.abs(parsed);
+}
+
+function calculateGrossPnl(buyPrice, sellPrice, shares) {
+  if (buyPrice === null || sellPrice === null || shares === null) return null;
+  return (sellPrice - buyPrice) * shares;
+}
+
+function calculateNetPnl(grossPnl, buyComm, sellComm) {
+  if (grossPnl === null) return null;
+  return grossPnl - Math.abs(buyComm || 0) - Math.abs(sellComm || 0);
+}
+
+function getTradeTargetPct(t) {
+  return normalizeStoredTargetPctValue(t.target_pct);
+}
+
+function getTradeTargetPrice(t) {
+  const stored = parseNumberValue(t.target_price);
+  if (stored !== null) return stored;
+  return getTargetPrice(parseNumberValue(t.buy_price), getTradeTargetPct(t));
+}
+
+function getTradeNetPnl(t) {
+  const buyPrice = parseNumberValue(t.buy_price);
+  const sellPrice = parseNumberValue(t.sell_price);
+  const shares = parseNumberValue(t.shares);
+  const gross = calculateGrossPnl(buyPrice, sellPrice, shares);
+  const buyComm = getCommissionValue(t.buy_comm, 0);
+  const sellComm = getCommissionValue(t.sell_comm, 0);
+  return calculateNetPnl(gross, buyComm, sellComm);
+}
+
+function setRecommendedSharesButton(recommendedShares) {
+  const btn = document.getElementById('fillSharesBtn');
+  if (!btn) return;
+  const enabled = recommendedShares !== null && recommendedShares > 0;
+  btn.disabled = !enabled;
+  btn.textContent = enabled ? `填入 ${recommendedShares} 股` : '使用建议值';
+}
+
+function applyRecommendedShares() {
+  const s = getSettings();
+  const buyPrice = getNumberInputValue('f_buyPrice');
+  const stopLoss = getNumberInputValue('f_stopLoss');
+  const maxLoss = s.total * (s.singleStop / 100);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  if (recommendedShares === null || recommendedShares <= 0) {
+    showAlert('addAlert', '请先填写有效的买入价、止损价和总资金，才能自动填入建议股数', 'warn');
+    return;
+  }
+  const sharesInput = document.getElementById('f_shares');
+  if (sharesInput) sharesInput.value = String(recommendedShares);
+  computeFields();
 }
 
 function normalizeSettings(source = {}) {
@@ -556,7 +665,7 @@ function toRow(t) {
     chan_high:t.chanHigh ?? null, chan_low:t.chanLow ?? null,
     sell_price:t.sellPrice ?? null, sell_date:t.sellDate||null,
     sell_high:t.sellHigh ?? null, sell_low:t.sellLow ?? null,
-    sell_reason:t.sellReason||null, buy_comm:t.buyComm ?? -1,
+    sell_reason:t.sellReason||null, buy_comm:t.buyComm ?? 1,
     sell_comm:t.sellComm ?? 0, review:t.review||null,
     used_stop:t.usedStop ?? null, pnl:t.pnl ?? null, pnl_net:t.pnlNet ?? null
   };
@@ -589,6 +698,17 @@ async function loadSettingsFromDb() {
 function getSettings() {
   return normalizeSettings(settings);
 }
+
+function updateRiskRuleLabels() {
+  const s = getSettings();
+  const maxLossLabel = document.getElementById('cMaxLossLabel');
+  const singleStopLabel = document.getElementById('banner2pctLabel');
+  const monthStopLabel = document.getElementById('banner6pctLabel');
+  if (maxLossLabel) maxLossLabel.textContent = `最大可损 (${s.singleStop}%)`;
+  if (singleStopLabel) singleStopLabel.textContent = `单笔止损 (${s.singleStop}%)`;
+  if (monthStopLabel) monthStopLabel.textContent = `月度止损 (${s.monthStop}%)`;
+}
+
 function scheduleSettingsSave() {
   if (settingsSaveTimer) clearTimeout(settingsSaveTimer);
   settingsSaveTimer = setTimeout(() => {
@@ -634,66 +754,119 @@ function loadSettingsUI() {
   document.getElementById('s_singleStop').value=s.singleStop;
   document.getElementById('s_monthStop').value=s.monthStop;
   document.getElementById('s_month').value=s.month;
+  updateRiskRuleLabels();
 }
 
 // ── Compute ───────────────────────────────────────────────────
 function getMonthLosses(month) {
-  return trades.filter(t=>(t.sell_date||t.buy_date||'').slice(0,7)===month && t.pnl_net!==null && t.pnl_net<0)
-               .reduce((s,t)=>s+Math.abs(parseFloat(t.pnl_net)),0);
+  return trades
+    .filter(t => (t.sell_date || t.buy_date || '').slice(0,7) === month)
+    .reduce((sum, t) => {
+      const net = getTradeNetPnl(t);
+      return net !== null && net < 0 ? sum + Math.abs(net) : sum;
+    }, 0);
 }
 function computeFields() {
   const s=getSettings(), total=s.total;
-  const bp=parseFloat(document.getElementById('f_buyPrice').value);
-  const sl=parseFloat(document.getElementById('f_stopLoss').value);
-  const sh=parseFloat(document.getElementById('f_shares').value);
-  const dh=parseFloat(document.getElementById('f_dayHigh').value);
-  const dl=parseFloat(document.getElementById('f_dayLow').value);
+  const bp=getNumberInputValue('f_buyPrice');
+  const sl=getNumberInputValue('f_stopLoss');
+  const sh=getNumberInputValue('f_shares');
+  const dh=getNumberInputValue('f_dayHigh');
+  const dl=getNumberInputValue('f_dayLow');
+  const targetPct=parseTargetPctInput(getNumberInputValue('f_targetPct'));
   const maxLoss=total*(s.singleStop/100);
   document.getElementById('cMaxLoss').textContent=total?`$${maxLoss.toFixed(2)}`:'—';
-  if(bp&&sl&&total){
-    const pct=(bp-sl)/bp*100;
+  if(bp!==null && sl!==null && bp > 0){
+    const riskPerShare = getRiskPerShare(bp, sl);
+    const pct = riskPerShare !== null ? (riskPerShare / bp * 100) : null;
     const el=document.getElementById('cStopPct');
-    el.textContent=pct.toFixed(2)+'%';
-    el.className='computed-val'+(pct>8?' warn':'');
-    document.getElementById('cMaxPos').textContent='$'+(maxLoss/((bp-sl)/bp)).toFixed(0);
-  } else { document.getElementById('cStopPct').textContent='—'; document.getElementById('cMaxPos').textContent='—'; }
-  if(bp&&sl&&sh){
-    const used=(bp-sl)*sh;
+    if (pct === null) {
+      el.textContent='无效';
+      el.className='computed-val danger';
+      document.getElementById('cMaxPos').textContent='—';
+      document.getElementById('cMaxPos').className='computed-val danger';
+      setRecommendedSharesButton(null);
+    } else {
+      el.textContent=pct.toFixed(2)+'%';
+      el.className='computed-val'+(pct>8?' warn':'');
+      const recommendedShares = getRecommendedShares(maxLoss, bp, sl);
+      const maxSharesEl = document.getElementById('cMaxPos');
+      maxSharesEl.textContent=recommendedShares!==null?`${recommendedShares.toLocaleString()} 股`:'—';
+      maxSharesEl.className='computed-val';
+      setRecommendedSharesButton(recommendedShares);
+    }
+  } else {
+    document.getElementById('cStopPct').textContent='—';
+    document.getElementById('cStopPct').className='computed-val';
+    document.getElementById('cMaxPos').textContent='—';
+    document.getElementById('cMaxPos').className='computed-val';
+    setRecommendedSharesButton(null);
+  }
+  if(bp!==null && sl!==null && sh!==null){
+    const riskPerShare = getRiskPerShare(bp, sl);
+    const used = riskPerShare !== null ? riskPerShare * sh : null;
     const el=document.getElementById('cUsedStop');
-    el.textContent='$'+used.toFixed(2);
-    el.className='computed-val'+(total&&used>maxLoss?' danger':'');
-  } else { document.getElementById('cUsedStop').textContent='—'; }
-  if(bp&&dh&&dl){
+    if (used === null) {
+      el.textContent='无效';
+      el.className='computed-val danger';
+    } else {
+      el.textContent='$'+used.toFixed(2);
+      el.className='computed-val'+(total&&used>maxLoss?' danger':'');
+    }
+  } else {
+    document.getElementById('cUsedStop').textContent='—';
+    document.getElementById('cUsedStop').className='computed-val';
+  }
+  const targetPrice = getTargetPrice(bp, targetPct);
+  document.getElementById('f_target').value = targetPrice !== null ? targetPrice.toFixed(3) : '';
+  const targetEl = document.getElementById('cTargetPrice');
+  if (targetPrice !== null) {
+    targetEl.textContent = '$' + targetPrice.toFixed(3);
+    targetEl.className = 'computed-val';
+  } else {
+    targetEl.textContent = '—';
+    targetEl.className = 'computed-val';
+  }
+  if(bp!==null && dh!==null && dl!==null && dh !== dl){
     const r=((dh-bp)/(dh-dl)*100).toFixed(0);
     const el=document.getElementById('cBuyRating');
     el.textContent=r+'%';
     el.className='computed-val'+(parseInt(r)>=50?'':' warn');
-  } else { document.getElementById('cBuyRating').textContent='—'; }
+  } else {
+    document.getElementById('cBuyRating').textContent='—';
+    document.getElementById('cBuyRating').className='computed-val';
+  }
 }
 
 // ── Trade CRUD ───────────────────────────────────────────────
 async function saveTrade() {
   const stock=document.getElementById('f_stock').value.trim().toUpperCase();
   const buyPrice=getNumberInputValue('f_buyPrice');
-  const shares=getNumberInputValue('f_shares');
+  const sharesRaw=getNumberInputValue('f_shares');
+  const shares=sharesRaw!==null?Math.floor(sharesRaw):null;
   const stopLoss=getNumberInputValue('f_stopLoss');
+  const targetPct=parseTargetPctInput(getNumberInputValue('f_targetPct'));
+  const targetPrice=getTargetPrice(buyPrice, targetPct);
   if(!stock||!buyPrice||!shares||!stopLoss){showAlert('addAlert','请填写必填项：股票代码、买入价、股数、止损价','danger');return;}
-  const s=getSettings(), maxLoss=s.total*(s.singleStop/100), usedStop=(buyPrice-stopLoss)*shares;
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  if (riskPerShare === null) { showAlert('addAlert','止损价必须低于买入价，才能计算风险和股数','danger'); return; }
+  if (shares <= 0) { showAlert('addAlert','股数必须大于 0','danger'); return; }
+  const s=getSettings(), maxLoss=s.total*(s.singleStop/100), usedStop=riskPerShare*shares;
   if(s.total&&usedStop>maxLoss&&!confirm(`止损额度 $${usedStop.toFixed(2)} 超过单笔${s.singleStop}%上限 $${maxLoss.toFixed(2)}，确定继续？`)) return;
   const sellPrice=getNumberInputValue('f_sellPrice');
   const buyCommInput=getNumberInputValue('f_buyComm');
   const sellCommInput=getNumberInputValue('f_sellComm');
-  const buyComm=buyCommInput ?? -1;
-  const sellComm=sellCommInput ?? (sellPrice!==null?-1:0);
-  const pnl=sellPrice?(sellPrice-buyPrice)*shares:null;
-  const pnlNet=pnl!==null?pnl+buyComm+sellComm:null;
+  const buyComm=getCommissionValue(buyCommInput, 1);
+  const sellComm=getCommissionValue(sellCommInput, sellPrice!==null?1:0);
+  const pnl=calculateGrossPnl(buyPrice, sellPrice, shares);
+  const pnlNet=calculateNetPnl(pnl, buyComm, sellComm);
   const trade={stock,buyPrice,shares,stopLoss,usedStop,pnl,pnlNet,
     stopReason:document.getElementById('f_stopReason').value,
     buyDate:document.getElementById('f_buyDate').value||null,
     dayHigh:getNumberInputValue('f_dayHigh'),
     dayLow:getNumberInputValue('f_dayLow'),
-    targetPrice:getNumberInputValue('f_target'),
-    targetPct:getNumberInputValue('f_targetPct'),
+    targetPrice,
+    targetPct,
     chanHigh:getNumberInputValue('f_chanHigh'),
     chanLow:getNumberInputValue('f_chanLow'),
     sellPrice,sellDate:document.getElementById('f_sellDate').value||null,
@@ -720,24 +893,39 @@ function openEditModal(id) {
   const t=trades.find(x=>sameId(x.id, id)); if(!t) return;
   editingId=id;
   document.getElementById('editModal').classList.add('open');
-  const pnlNet=t.pnl_net;
+  const pnlNet=getTradeNetPnl(t);
+  const targetPct = getTradeTargetPct(t);
+  const targetPrice = getTradeTargetPrice(t);
   document.getElementById('modalBody').innerHTML=`
     <div class="computed-card" style="margin-bottom:20px">
       <div class="computed-item"><span class="computed-label">占用止损</span><span class="computed-val">${t.used_stop!=null?'$'+parseFloat(t.used_stop).toFixed(2):'—'}</span></div>
       <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val">${t.day_high&&t.day_low?((t.day_high-t.buy_price)/(t.day_high-t.day_low)*100).toFixed(0)+'%':'—'}</span></div>
+      <div class="computed-item"><span class="computed-label">目标价</span><span class="computed-val">${targetPrice!==null?'$'+targetPrice.toFixed(3):'—'}</span></div>
       <div class="computed-item"><span class="computed-label">盈亏</span><span class="computed-val ${pnlNet===null?'':pnlNet>=0?'':'danger'}">${pnlNet===null?'持仓中':'$'+parseFloat(pnlNet).toFixed(2)}</span></div>
     </div>
     <div class="form-grid">
+      <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="m_targetPct" value="${targetPct ?? ''}" step="0.1" oninput="updateModalTargetPrice()"></div>
+      <div class="form-group"><label>盈利目标价</label><input type="number" id="m_target" value="${targetPrice!==null?targetPrice.toFixed(3):''}" step="0.001" readonly></div>
+      <div class="form-group"><label>通道高点</label><input type="number" id="m_chanHigh" value="${t.chan_high||''}" step="0.001"></div>
+      <div class="form-group"><label>通道低点</label><input type="number" id="m_chanLow" value="${t.chan_low||''}" step="0.001"></div>
       <div class="form-group"><label>卖出价</label><input type="number" id="m_sell" value="${t.sell_price||''}" step="0.001"></div>
       <div class="form-group"><label>卖出日期</label><input type="date" id="m_sellDate" value="${t.sell_date||''}"></div>
       <div class="form-group"><label>卖出最高价</label><input type="number" id="m_sellHigh" value="${t.sell_high||''}" step="0.001"></div>
       <div class="form-group"><label>卖出最低价</label><input type="number" id="m_sellLow" value="${t.sell_low||''}" step="0.001"></div>
       <div class="form-group full"><label>卖出理由</label><input type="text" id="m_sellReason" value="${t.sell_reason||''}"></div>
-      <div class="form-group"><label>买入佣金</label><input type="number" id="m_buyComm" value="${t.buy_comm||''}"></div>
-      <div class="form-group"><label>卖出佣金</label><input type="number" id="m_sellComm" value="${t.sell_comm||''}"></div>
+      <div class="form-group"><label>买入佣金</label><input type="number" id="m_buyComm" value="${getCommissionValue(t.buy_comm, 1)}" min="0" step="0.01"></div>
+      <div class="form-group"><label>卖出佣金</label><input type="number" id="m_sellComm" value="${getCommissionValue(t.sell_comm, 0)}" min="0" step="0.01"></div>
       <div class="form-group full"><label>操作复盘</label><textarea id="m_review">${t.review||''}</textarea></div>
     </div>
     <div class="btn-row"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="updateBtn" onclick="updateTrade()">保存更新</button></div>`;
+}
+
+function updateModalTargetPrice() {
+  const t=trades.find(x=>sameId(x.id, editingId)); if(!t) return;
+  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
+  const targetPrice = getTargetPrice(parseNumberValue(t.buy_price), targetPct);
+  const targetInput = document.getElementById('m_target');
+  if (targetInput) targetInput.value = targetPrice !== null ? targetPrice.toFixed(3) : '';
 }
 
 async function updateTrade() {
@@ -745,11 +933,16 @@ async function updateTrade() {
   const sp=getNumberInputValue('m_sell');
   const bcInput=getNumberInputValue('m_buyComm');
   const scInput=getNumberInputValue('m_sellComm');
-  const bc=bcInput ?? (parseNumberValue(t.buy_comm) ?? -1);
-  const sc=scInput ?? (parseNumberValue(t.sell_comm) ?? 0);
-  const pnl=sp?(sp-t.buy_price)*t.shares:null;
-  const pnlNet=pnl!==null?pnl+bc+sc:null;
+  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
+  const targetPrice = getTargetPrice(parseNumberValue(t.buy_price), targetPct);
+  const bc=getCommissionValue(bcInput, getCommissionValue(t.buy_comm, 1));
+  const sc=getCommissionValue(scInput, getCommissionValue(t.sell_comm, 0));
+  const pnl=calculateGrossPnl(parseNumberValue(t.buy_price), sp, parseNumberValue(t.shares));
+  const pnlNet=calculateNetPnl(pnl, bc, sc);
   const u={sell_price:sp,sell_date:document.getElementById('m_sellDate').value||null,
+    target_price:targetPrice,target_pct:targetPct,
+    chan_high:getNumberInputValue('m_chanHigh'),
+    chan_low:getNumberInputValue('m_chanLow'),
     sell_high:getNumberInputValue('m_sellHigh'),
     sell_low:getNumberInputValue('m_sellLow'),
     sell_reason:document.getElementById('m_sellReason').value,
@@ -774,14 +967,15 @@ function renderTrades() {
     const sh=parseFloat(t.sell_high),sl=parseFloat(t.sell_low),sp=parseFloat(t.sell_price);
     const br=dh&&dl?((dh-bp)/(dh-dl)*100).toFixed(0)+'%':'—';
     const sr=sh&&sl&&sp?((sp-sl)/(sh-sl)*100).toFixed(0)+'%':'—';
-    const pn=t.pnl_net,pd=pn!==null?`<span class="${pn>=0?'pnl-pos':'pnl-neg'}">$${parseFloat(pn).toFixed(2)}</span>`:'—';
+    const targetPrice = getTradeTargetPrice(t);
+    const pn=getTradeNetPnl(t),pd=pn!==null?`<span class="${pn>=0?'pnl-pos':'pnl-neg'}">$${parseFloat(pn).toFixed(2)}</span>`:'—';
     const st=t.sell_price?(pn>=0?'<span class="badge badge-win">盈利</span>':'<span class="badge badge-loss">亏损</span>'):'<span class="badge badge-open">持仓中</span>';
     return `<tr class="trade-row" data-trade-id="${tradeId}">
       <td class="mono">${trades.length-i}</td>
       <td style="font-weight:700;color:var(--accent3)">${escapeHtml(t.stock)}</td>
       <td class="mono">$${parseFloat(t.buy_price).toFixed(3)}</td>
       <td class="mono" style="color:var(--red)">$${parseFloat(t.stop_loss).toFixed(3)}</td>
-      <td class="mono" style="color:var(--green)">${t.target_price?'$'+parseFloat(t.target_price).toFixed(2):'—'}</td>
+      <td class="mono" style="color:var(--green)">${targetPrice!==null?'$'+targetPrice.toFixed(2):'—'}</td>
       <td class="mono">${t.shares}</td>
       <td class="mono" style="color:${parseFloat(br)>=50?'var(--green)':'var(--yellow)'}">${br}</td>
       <td class="mono">${t.used_stop!=null?'$'+parseFloat(t.used_stop).toFixed(0):'—'}</td>
@@ -813,12 +1007,12 @@ function renderBanner() {
 }
 
 function renderStats() {
-  const s=getSettings(), cl=trades.filter(t=>t.pnl_net!==null);
-  const wins=cl.filter(t=>t.pnl_net>0), losses=cl.filter(t=>t.pnl_net<0);
-  const tp=cl.reduce((s,t)=>s+parseFloat(t.pnl_net),0);
+  const s=getSettings(), cl=trades.filter(t=>getTradeNetPnl(t)!==null);
+  const wins=cl.filter(t=>getTradeNetPnl(t)>0), losses=cl.filter(t=>getTradeNetPnl(t)<0);
+  const tp=cl.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0);
   const wr=cl.length?(wins.length/cl.length*100).toFixed(1):0;
-  const aw=wins.length?wins.reduce((s,t)=>s+parseFloat(t.pnl_net),0)/wins.length:0;
-  const al=losses.length?losses.reduce((s,t)=>s+parseFloat(t.pnl_net),0)/losses.length:0;
+  const aw=wins.length?wins.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/wins.length:0;
+  const al=losses.length?losses.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/losses.length:0;
   const rr=aw&&al?Math.abs(aw/al).toFixed(2):'—';
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-val ${tp>=0?'pnl-pos':'pnl-neg'}">$${tp.toFixed(2)}</div><div class="stat-label">总盈亏</div></div>
@@ -841,7 +1035,7 @@ function renderStats() {
     </div>`;
 }
 
-function refreshAll() { renderBanner(); renderTrades(); renderStats(); }
+function refreshAll() { updateRiskRuleLabels(); renderBanner(); renderTrades(); renderStats(); }
 
 // ── UI ────────────────────────────────────────────────────────
 function switchTab(n) {
