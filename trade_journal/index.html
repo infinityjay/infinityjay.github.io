@@ -389,6 +389,15 @@ function getNumberInputValue(id) {
   return el ? parseNumberValue(el.value) : null;
 }
 
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), ms);
+    })
+  ]);
+}
+
 // ── Config ──────────────────────────────────────────────────
 function saveConfig() {
   const url = document.getElementById('cfg_url').value.trim();
@@ -415,13 +424,21 @@ async function initSupabase() {
     if (!window.supabase || !window.supabase.createClient) {
       throw new Error('Supabase SDK 未加载，请检查网络或稍后重试');
     }
+    setView('boot', '正在连接 Supabase…');
     supabase = window.supabase.createClient(url, key);
-    const { error } = await supabase.from(DB_TABLE).select('*', { count:'exact', head:true });
+    const { error } = await withTimeout(
+      supabase.from(DB_TABLE).select('id').limit(1),
+      10000,
+      '数据库连接超时，请检查浏览器网络、插件拦截或稍后重试'
+    );
     if (error) throw error;
     setDbStatus(true);
     setView('app');
-    await loadTrades();
     initUI();
+    loadTrades().catch((err) => {
+      console.error(err);
+      showAlert('tradeAlertZone', '读取交易记录失败：' + (err.message || err), 'danger');
+    });
   } catch(e) {
     setDbStatus(false);
     setView('config');
@@ -439,12 +456,24 @@ function setDbStatus(ok) {
 
 // ── DB ops ───────────────────────────────────────────────────
 async function loadTrades() {
-  let result = await supabase.from(DB_TABLE).select('*').order('created_at', { ascending:false });
+  let result = await withTimeout(
+    supabase.from(DB_TABLE).select('*').order('created_at', { ascending:false }),
+    10000,
+    '读取交易记录超时'
+  );
   if (result.error) {
-    result = await supabase.from(DB_TABLE).select('*').order('buy_date', { ascending:false });
+    result = await withTimeout(
+      supabase.from(DB_TABLE).select('*').order('buy_date', { ascending:false }),
+      10000,
+      '读取交易记录超时'
+    );
   }
   if (result.error) {
-    result = await supabase.from(DB_TABLE).select('*');
+    result = await withTimeout(
+      supabase.from(DB_TABLE).select('*'),
+      10000,
+      '读取交易记录超时'
+    );
   }
   const { data, error } = result;
   if (error) { console.error(error); showAlert('tradeAlertZone', '读取交易记录失败：' + error.message, 'danger'); return; }
