@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交易日志 · Trade Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8f53a;
+    --accent2: #ff4d4d;
+    --accent3: #4d9fff;
+    --text: #e8e8e8;
+    --muted: #666;
+    --green: #4caf7d;
+    --red: #ff5252;
+    --yellow: #ffc947;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Noto Sans SC',sans-serif; min-height:100vh; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; align-items:center; justify-content:space-between;
+    position: sticky; top:0; background:var(--bg); z-index:100;
+  }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-mark { width:32px; height:32px; border:2px solid var(--accent); transform:rotate(45deg); }
+  .logo-text { font-family:'Space Mono',monospace; font-size:14px; letter-spacing:0.1em; color:var(--accent); }
+  .header-right { display:flex; align-items:center; gap:16px; }
+
+  /* FUND BANNER */
+  .fund-banner {
+    background: var(--surface); border-bottom:1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; gap: 48px; align-items:center;
+  }
+  .fund-item { display:flex; flex-direction:column; gap:4px; }
+  .fund-label { font-size:11px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; font-family:'Space Mono',monospace; }
+  .fund-value { font-size:22px; font-family:'Space Mono',monospace; font-weight:700; }
+  .fund-value.accent { color:var(--accent); }
+  .fund-value.danger { color:var(--red); }
+  .fund-value.safe { color:var(--green); }
+  .fund-divider { width:1px; height:40px; background:var(--border); }
+
+  /* GAUGE */
+  .gauge-wrap { position:relative; width:80px; height:40px; }
+  .gauge-bg { fill:none; stroke:var(--border); stroke-width:8; }
+  .gauge-fill { fill:none; stroke-width:8; stroke-linecap:round; transition:all .5s ease; }
+
+  /* TABS */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); padding:0 32px; }
+  .tab { padding:14px 20px; font-size:13px; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted); transition:all .2s; font-family:'Space Mono',monospace; letter-spacing:0.05em; }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab:hover { color:var(--text); }
+
+  /* LAYOUT */
+  .main { padding:32px; max-width:1600px; margin:0 auto; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* FORM */
+  .form-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:2px;
+    padding:32px; margin-bottom:24px;
+  }
+  .form-title { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.15em; color:var(--accent); margin-bottom:24px; text-transform:uppercase; }
+  .form-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:16px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-group.half { grid-column: span 2; }
+  label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'Space Mono',monospace; }
+  input, select, textarea {
+    background:var(--surface2); border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; font-size:14px; font-family:'Noto Sans SC',sans-serif;
+    border-radius:2px; outline:none; transition:border-color .2s;
+    width:100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  input[readonly] { color:var(--muted); cursor:default; border-color:transparent; background:rgba(255,255,255,0.03); }
+  textarea { resize:vertical; min-height:70px; }
+  select option { background:var(--surface2); }
+
+  /* COMPUTED FIELDS */
+  .computed-card {
+    background: linear-gradient(135deg, rgba(200,245,58,0.05) 0%, transparent 100%);
+    border:1px solid rgba(200,245,58,0.2); border-radius:2px;
+    padding:20px 24px; margin-bottom:24px;
+    display:flex; gap:32px; flex-wrap:wrap;
+  }
+  .computed-item { display:flex; flex-direction:column; gap:4px; }
+  .computed-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'Space Mono',monospace; }
+  .computed-val { font-size:18px; font-family:'Space Mono',monospace; font-weight:700; color:var(--accent); }
+  .computed-val.warn { color:var(--yellow); }
+  .computed-val.danger { color:var(--red); }
+
+  /* BUTTONS */
+  .btn {
+    padding:10px 24px; border:none; cursor:pointer; font-size:13px;
+    font-family:'Space Mono',monospace; letter-spacing:0.08em; transition:all .2s;
+    border-radius:2px;
+  }
+  .btn-primary { background:var(--accent); color:#0a0a0a; }
+  .btn-primary:hover { background:#d4f84a; transform:translateY(-1px); }
+  .btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); }
+  .btn-danger:hover { background:var(--red); color:white; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
+  .btn-ghost:hover { border-color:var(--text); color:var(--text); }
+  .btn-row { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead tr { border-bottom:2px solid var(--border); }
+  thead th { padding:10px 12px; text-align:left; font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background .15s; cursor:pointer; }
+  tbody tr:hover { background:var(--surface); }
+  tbody td { padding:12px 12px; white-space:nowrap; }
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:2px; font-size:11px;
+    font-family:'Space Mono',monospace; font-weight:700;
+  }
+  .badge-open { background:rgba(77,159,255,0.15); color:var(--accent3); border:1px solid rgba(77,159,255,0.3); }
+  .badge-closed { background:rgba(100,100,100,0.15); color:var(--muted); border:1px solid var(--border); }
+  .badge-win { background:rgba(76,175,125,0.15); color:var(--green); border:1px solid rgba(76,175,125,0.3); }
+  .badge-loss { background:rgba(255,82,82,0.15); color:var(--red); border:1px solid rgba(255,82,82,0.3); }
+  .pnl-pos { color:var(--green); font-family:'Space Mono',monospace; }
+  .pnl-neg { color:var(--red); font-family:'Space Mono',monospace; }
+  .mono { font-family:'Space Mono',monospace; }
+
+  /* MODAL */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:200; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:2px;
+    width:90%; max-width:760px; max-height:90vh; overflow-y:auto;
+    padding:32px; position:relative;
+  }
+  .modal-close {
+    position:absolute; top:16px; right:16px; background:none; border:none;
+    color:var(--muted); font-size:20px; cursor:pointer; font-family:'Space Mono',monospace;
+    line-height:1;
+  }
+  .modal-close:hover { color:var(--text); }
+
+  /* STATS */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:32px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:20px 24px; }
+  .stat-val { font-size:28px; font-family:'Space Mono',monospace; font-weight:700; margin-bottom:4px; }
+  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'Space Mono',monospace; }
+
+  /* ALERT */
+  .alert { padding:12px 16px; border-radius:2px; font-size:13px; margin-bottom:16px; }
+  .alert-danger { background:rgba(255,82,82,0.1); border:1px solid rgba(255,82,82,0.3); color:var(--red); }
+  .alert-warn { background:rgba(255,201,71,0.1); border:1px solid rgba(255,201,71,0.3); color:var(--yellow); }
+  .alert-ok { background:rgba(76,175,125,0.1); border:1px solid rgba(76,175,125,0.3); color:var(--green); }
+
+  /* SETTINGS */
+  .settings-row { display:flex; align-items:center; gap:16px; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .settings-info { flex:1; }
+  .settings-title { font-size:14px; margin-bottom:2px; }
+  .settings-desc { font-size:12px; color:var(--muted); }
+
+  /* EMPTY STATE */
+  .empty { text-align:center; padding:80px 0; color:var(--muted); }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-text { font-family:'Space Mono',monospace; font-size:13px; }
+
+  /* RISK METER */
+  .risk-bar-wrap { background:var(--surface2); height:6px; border-radius:3px; overflow:hidden; margin-top:6px; width:120px; }
+  .risk-bar-fill { height:100%; border-radius:3px; transition:width .4s ease; }
+
+  /* Responsive */
+  @media(max-width:768px) {
+    .fund-banner { flex-wrap:wrap; gap:16px; padding:16px; }
+    .main { padding:16px; }
+    header { padding:16px; }
+    .tabs { padding:0 16px; overflow-x:auto; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <span class="logo-text">TRADE JOURNAL</span>
+  </div>
+  <div class="header-right">
+    <span id="dateDisplay" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)"></span>
+    <button class="btn btn-primary" onclick="openAddModal()">+ 新交易</button>
+  </div>
+</header>
+
+<!-- Fund Banner -->
+<div class="fund-banner">
+  <div class="fund-item">
+    <span class="fund-label">总资金</span>
+    <span class="fund-value accent" id="bannerTotal">$0</span>
+  </div>
+  <div class="fund-divider"></div>
+  <div class="fund-item">
+    <span class="fund-label">单笔止损上限 (2%)</span>
+    <span class="fund-value" id="banner2pct" style="color:var(--yellow)">$0</span>
+  </div>
+  <div class="fund-divider"></div>
+  <div class="fund-item">
+    <span class="fund-label">月度止损上限 (6%)</span>
+    <span class="fund-value" id="banner6pct" style="color:var(--red)">$0</span>
+  </div>
+  <div class="fund-divider"></div>
+  <div class="fund-item">
+    <span class="fund-label">已用月度止损</span>
+    <span class="fund-value" id="bannerUsed">$0</span>
+  </div>
+  <div class="fund-divider"></div>
+  <div class="fund-item">
+    <span class="fund-label">剩余止损额度</span>
+    <span class="fund-value safe" id="bannerRemain">$0</span>
+  </div>
+  <div class="fund-divider"></div>
+  <div class="fund-item">
+    <span class="fund-label">月度止损使用</span>
+    <div class="risk-bar-wrap">
+      <div class="risk-bar-fill" id="riskBar" style="width:0%;background:var(--green)"></div>
+    </div>
+    <span id="riskPct" style="font-size:12px;font-family:'Space Mono',monospace;color:var(--muted);margin-top:3px">0%</span>
+  </div>
+</div>
+
+<!-- Alert Zone -->
+<div id="alertZone" style="padding:0 32px;margin-top:12px;"></div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('trades')">交易记录</div>
+  <div class="tab" onclick="switchTab('add')">新建交易</div>
+  <div class="tab" onclick="switchTab('stats')">统计分析</div>
+  <div class="tab" onclick="switchTab('settings')">设置</div>
+</div>
+
+<div class="main">
+
+  <!-- TRADES LIST -->
+  <div id="panel-trades" class="panel active">
+    <div id="tradeAlertZone"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>股票</th>
+            <th>买入价</th>
+            <th>止损价</th>
+            <th>目标价</th>
+            <th>股数</th>
+            <th>买入评级</th>
+            <th>止损占资金</th>
+            <th>卖出价</th>
+            <th>卖出评级</th>
+            <th>盈亏</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tradeBody">
+        </tbody>
+      </table>
+      <div id="emptyState" class="empty">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">还没有交易记录<br>点击右上角「+ 新交易」开始</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TRADE -->
+  <div id="panel-add" class="panel">
+    <div id="addAlert"></div>
+
+    <!-- Computed helper -->
+    <div class="computed-card" id="computedCard">
+      <div class="computed-item">
+        <span class="computed-label">最大可损金额 (2%)</span>
+        <span class="computed-val" id="cMaxLoss">—</span>
+      </div>
+      <div class="computed-item">
+        <span class="computed-label">建议止损幅度</span>
+        <span class="computed-val" id="cStopPct">—</span>
+      </div>
+      <div class="computed-item">
+        <span class="computed-label">建议最大持仓市值</span>
+        <span class="computed-val" id="cMaxPos">—</span>
+      </div>
+      <div class="computed-item">
+        <span class="computed-label">占用止损额度</span>
+        <span class="computed-val" id="cUsedStop">—</span>
+      </div>
+      <div class="computed-item">
+        <span class="computed-label">买入评级</span>
+        <span class="computed-val" id="cBuyRating">—</span>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-title">买入信息</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>股票代码 *</label>
+          <input type="text" id="f_stock" placeholder="AMZN" oninput="computeFields()" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>买入价 *</label>
+          <input type="number" id="f_buyPrice" placeholder="0.00" step="0.001" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>买入日期</label>
+          <input type="date" id="f_buyDate">
+        </div>
+        <div class="form-group">
+          <label>买入日最高价</label>
+          <input type="number" id="f_dayHigh" placeholder="0.00" step="0.001" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>买入日最低价</label>
+          <input type="number" id="f_dayLow" placeholder="0.00" step="0.001" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>止损价 *</label>
+          <input type="number" id="f_stopLoss" placeholder="0.00" step="0.001" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>止损理由</label>
+          <input type="text" id="f_stopReason" placeholder="前低次低点">
+        </div>
+        <div class="form-group">
+          <label>盈利目标价</label>
+          <input type="number" id="f_target" placeholder="0.00" step="0.001">
+        </div>
+        <div class="form-group">
+          <label>目标盈利比例</label>
+          <input type="number" id="f_targetPct" placeholder="0.10" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>股数 *</label>
+          <input type="number" id="f_shares" placeholder="100" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>通道高点</label>
+          <input type="number" id="f_chanHigh" placeholder="0.00" step="0.001">
+        </div>
+        <div class="form-group">
+          <label>通道低点</label>
+          <input type="number" id="f_chanLow" placeholder="0.00" step="0.001">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-title">卖出信息（可留空，后续填写）</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>卖出价</label>
+          <input type="number" id="f_sellPrice" placeholder="0.00" step="0.001" oninput="computeFields()">
+        </div>
+        <div class="form-group">
+          <label>卖出日期</label>
+          <input type="date" id="f_sellDate">
+        </div>
+        <div class="form-group">
+          <label>卖出日最高价</label>
+          <input type="number" id="f_sellHigh" placeholder="0.00" step="0.001">
+        </div>
+        <div class="form-group">
+          <label>卖出日最低价</label>
+          <input type="number" id="f_sellLow" placeholder="0.00" step="0.001">
+        </div>
+        <div class="form-group full">
+          <label>卖出理由</label>
+          <input type="text" id="f_sellReason" placeholder="触发止损 / 达到目标 / ...">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-title">佣金 & 复盘</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>买入佣金 ($)</label>
+          <input type="number" id="f_buyComm" placeholder="-1.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>卖出佣金 ($)</label>
+          <input type="number" id="f_sellComm" placeholder="-1.00" step="0.01">
+        </div>
+        <div class="form-group half">
+          <label>操作问题复盘</label>
+          <textarea id="f_review" placeholder="记录本次交易的问题与经验..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="clearForm()">清空</button>
+      <button class="btn btn-primary" onclick="saveTrade()">保存交易</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="panel-stats" class="panel">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="form-card">
+      <div class="form-title">月度止损规则状态</div>
+      <div id="monthlyReport"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="panel-settings" class="panel">
+    <div class="form-card">
+      <div class="form-title">账户设置</div>
+      <div class="form-grid" style="max-width:400px">
+        <div class="form-group">
+          <label>总资金 ($)</label>
+          <input type="number" id="s_total" placeholder="114000" oninput="saveSettings()">
+        </div>
+        <div class="form-group">
+          <label>单笔止损上限 (%)</label>
+          <input type="number" id="s_singleStop" value="2" step="0.1" oninput="saveSettings()">
+        </div>
+        <div class="form-group">
+          <label>月度止损上限 (%)</label>
+          <input type="number" id="s_monthStop" value="6" step="0.1" oninput="saveSettings()">
+        </div>
+        <div class="form-group">
+          <label>统计月份 (YYYY-MM)</label>
+          <input type="month" id="s_month" oninput="saveSettings()">
+        </div>
+      </div>
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+        <div class="settings-row">
+          <div class="settings-info">
+            <div class="settings-title">导出交易数据</div>
+            <div class="settings-desc">将所有交易记录导出为 JSON 文件</div>
+          </div>
+          <button class="btn btn-ghost" onclick="exportData()">导出 JSON</button>
+        </div>
+        <div class="settings-row" style="border:none;margin:0;padding:0">
+          <div class="settings-info">
+            <div class="settings-title" style="color:var(--red)">清除所有数据</div>
+            <div class="settings-desc">删除本地所有交易记录，不可恢复</div>
+          </div>
+          <button class="btn btn-danger" onclick="clearAll()">清除数据</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="form-title" style="margin-bottom:20px">编辑交易</div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ========== STATE ==========
+let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+let settings = JSON.parse(localStorage.getItem('tradeSettings') || '{}');
+let editingId = null;
+
+function getSettings() {
+  return {
+    total: parseFloat(settings.total) || 0,
+    singleStop: parseFloat(settings.singleStop) || 2,
+    monthStop: parseFloat(settings.monthStop) || 6,
+    month: settings.month || new Date().toISOString().slice(0,7)
+  };
+}
+
+function saveSettings() {
+  const s = getSettings();
+  s.total = parseFloat(document.getElementById('s_total').value) || s.total;
+  s.singleStop = parseFloat(document.getElementById('s_singleStop').value) || s.singleStop;
+  s.monthStop = parseFloat(document.getElementById('s_monthStop').value) || s.monthStop;
+  s.month = document.getElementById('s_month').value || s.month;
+  settings = s;
+  localStorage.setItem('tradeSettings', JSON.stringify(s));
+  refreshAll();
+}
+
+function loadSettingsUI() {
+  const s = getSettings();
+  document.getElementById('s_total').value = s.total || '';
+  document.getElementById('s_singleStop').value = s.singleStop;
+  document.getElementById('s_monthStop').value = s.monthStop;
+  document.getElementById('s_month').value = s.month;
+}
+
+// ========== COMPUTE ==========
+function getMonthLosses(month) {
+  return trades
+    .filter(t => {
+      const d = t.sellDate || t.buyDate || '';
+      const m = (d+'').slice(0,7).replace(/(\d{4})(\d{2})/,'$1-$2') || (d+'').slice(0,7);
+      return m === month && t.pnlNet !== undefined && t.pnlNet < 0;
+    })
+    .reduce((sum, t) => sum + Math.abs(t.pnlNet || 0), 0);
+}
+
+function computeFields() {
+  const s = getSettings();
+  const buyPrice = parseFloat(document.getElementById('f_buyPrice').value);
+  const stopLoss = parseFloat(document.getElementById('f_stopLoss').value);
+  const shares = parseFloat(document.getElementById('f_shares').value);
+  const dayHigh = parseFloat(document.getElementById('f_dayHigh').value);
+  const dayLow  = parseFloat(document.getElementById('f_dayLow').value);
+  const sellPrice = parseFloat(document.getElementById('f_sellPrice').value);
+  const total = s.total;
+
+  const maxLoss = total * (s.singleStop / 100);
+  document.getElementById('cMaxLoss').textContent = total ? `$${maxLoss.toFixed(2)}` : '—';
+
+  if (buyPrice && stopLoss && total) {
+    const stopDiff = buyPrice - stopLoss;
+    const stopPct = (stopDiff / buyPrice * 100).toFixed(2);
+    document.getElementById('cStopPct').textContent = `${stopPct}%`;
+    document.getElementById('cStopPct').className = 'computed-val' + (parseFloat(stopPct) > 8 ? ' warn' : '');
+
+    const maxPos = maxLoss / (stopDiff / buyPrice);
+    document.getElementById('cMaxPos').textContent = `$${maxPos.toFixed(0)}`;
+  } else {
+    document.getElementById('cStopPct').textContent = '—';
+    document.getElementById('cMaxPos').textContent = '—';
+  }
+
+  if (buyPrice && stopLoss && shares) {
+    const usedStop = (buyPrice - stopLoss) * shares;
+    const el = document.getElementById('cUsedStop');
+    el.textContent = `$${usedStop.toFixed(2)}`;
+    el.className = 'computed-val' + (total && usedStop > maxLoss ? ' danger' : '');
+  } else {
+    document.getElementById('cUsedStop').textContent = '—';
+  }
+
+  if (buyPrice && dayHigh && dayLow) {
+    const rating = ((dayHigh - buyPrice) / (dayHigh - dayLow) * 100).toFixed(0);
+    const el = document.getElementById('cBuyRating');
+    el.textContent = `${rating}%`;
+    el.className = 'computed-val' + (parseInt(rating) >= 50 ? '' : ' warn');
+  } else {
+    document.getElementById('cBuyRating').textContent = '—';
+  }
+}
+
+function calcTrade(t) {
+  const pnl = t.sellPrice ? (t.sellPrice - t.buyPrice) * t.shares : null;
+  const buyComm = parseFloat(t.buyComm) || 0;
+  const sellComm = parseFloat(t.sellComm) || 0;
+  const pnlNet = pnl !== null ? pnl + buyComm + sellComm : null;
+  return { pnl, pnlNet };
+}
+
+// ========== TRADE CRUD ==========
+function saveTrade() {
+  const stock = document.getElementById('f_stock').value.trim().toUpperCase();
+  const buyPrice = parseFloat(document.getElementById('f_buyPrice').value);
+  const shares = parseInt(document.getElementById('f_shares').value);
+  const stopLoss = parseFloat(document.getElementById('f_stopLoss').value);
+  if (!stock || !buyPrice || !shares || !stopLoss) {
+    showAlert('addAlert', '请填写必填项：股票代码、买入价、股数、止损价', 'danger');
+    return;
+  }
+
+  const s = getSettings();
+  const maxLoss = s.total * (s.singleStop / 100);
+  const usedStop = (buyPrice - stopLoss) * shares;
+  if (s.total && usedStop > maxLoss) {
+    if (!confirm(`警告：此次占用止损额度 $${usedStop.toFixed(2)} 超过单笔2%上限 $${maxLoss.toFixed(2)}，确定继续？`)) return;
+  }
+
+  const sellPrice = parseFloat(document.getElementById('f_sellPrice').value) || null;
+  const buyComm = parseFloat(document.getElementById('f_buyComm').value) || -1;
+  const sellComm = parseFloat(document.getElementById('f_sellComm').value) || (sellPrice ? -1 : 0);
+
+  const pnl = sellPrice ? (sellPrice - buyPrice) * shares : null;
+  const pnlNet = pnl !== null ? pnl + buyComm + sellComm : null;
+
+  const trade = {
+    id: Date.now(),
+    stock, buyPrice, shares, stopLoss,
+    stopReason: document.getElementById('f_stopReason').value,
+    buyDate: document.getElementById('f_buyDate').value,
+    dayHigh: parseFloat(document.getElementById('f_dayHigh').value) || null,
+    dayLow: parseFloat(document.getElementById('f_dayLow').value) || null,
+    targetPrice: parseFloat(document.getElementById('f_target').value) || null,
+    targetPct: parseFloat(document.getElementById('f_targetPct').value) || null,
+    chanHigh: parseFloat(document.getElementById('f_chanHigh').value) || null,
+    chanLow: parseFloat(document.getElementById('f_chanLow').value) || null,
+    sellPrice,
+    sellDate: document.getElementById('f_sellDate').value,
+    sellHigh: parseFloat(document.getElementById('f_sellHigh').value) || null,
+    sellLow: parseFloat(document.getElementById('f_sellLow').value) || null,
+    sellReason: document.getElementById('f_sellReason').value,
+    buyComm, sellComm,
+    review: document.getElementById('f_review').value,
+    usedStop,
+    pnl, pnlNet
+  };
+
+  trades.push(trade);
+  localStorage.setItem('trades', JSON.stringify(trades));
+  clearForm();
+  switchTab('trades');
+  refreshAll();
+  showAlert('tradeAlertZone', `✓ ${stock} 交易已记录`, 'ok');
+}
+
+function deleteTrade(id) {
+  if (!confirm('确定删除这条交易记录？')) return;
+  trades = trades.filter(t => t.id !== id);
+  localStorage.setItem('trades', JSON.stringify(trades));
+  refreshAll();
+}
+
+function openEditModal(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('editModal').classList.add('open');
+
+  const s = getSettings();
+  const pnl = t.sellPrice ? (t.sellPrice - t.buyPrice) * t.shares : null;
+  const pnlNet = pnl !== null ? pnl + (t.buyComm||0) + (t.sellComm||0) : null;
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="computed-card" style="margin-bottom:20px">
+      <div class="computed-item"><span class="computed-label">占用止损</span><span class="computed-val">${t.usedStop != null ? '$'+t.usedStop.toFixed(2) : '—'}</span></div>
+      <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val">${t.dayHigh&&t.dayLow ? (((t.dayHigh-t.buyPrice)/(t.dayHigh-t.dayLow))*100).toFixed(0)+'%' : '—'}</span></div>
+      <div class="computed-item"><span class="computed-label">交易盈亏(含佣)</span><span class="computed-val ${pnlNet===null?'':pnlNet>=0?'':'danger'}">${pnlNet===null ? '持仓中' : '$'+pnlNet.toFixed(2)}</span></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>卖出价</label><input type="number" id="m_sell" value="${t.sellPrice||''}" step="0.001" placeholder="0.00"></div>
+      <div class="form-group"><label>卖出日期</label><input type="date" id="m_sellDate" value="${t.sellDate||''}"></div>
+      <div class="form-group"><label>卖出日最高价</label><input type="number" id="m_sellHigh" value="${t.sellHigh||''}" step="0.001"></div>
+      <div class="form-group"><label>卖出日最低价</label><input type="number" id="m_sellLow" value="${t.sellLow||''}" step="0.001"></div>
+      <div class="form-group full"><label>卖出理由</label><input type="text" id="m_sellReason" value="${t.sellReason||''}" placeholder="触发止损 / 达到目标 / ..."></div>
+      <div class="form-group"><label>买入佣金 ($)</label><input type="number" id="m_buyComm" value="${t.buyComm||''}" step="0.01"></div>
+      <div class="form-group"><label>卖出佣金 ($)</label><input type="number" id="m_sellComm" value="${t.sellComm||''}" step="0.01"></div>
+      <div class="form-group full"><label>操作问题复盘</label><textarea id="m_review">${t.review||''}</textarea></div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="updateTrade()">保存更新</button>
+    </div>
+  `;
+}
+
+function updateTrade() {
+  const t = trades.find(x => x.id === editingId);
+  if (!t) return;
+  t.sellPrice = parseFloat(document.getElementById('m_sell').value) || null;
+  t.sellDate = document.getElementById('m_sellDate').value;
+  t.sellHigh = parseFloat(document.getElementById('m_sellHigh').value) || null;
+  t.sellLow = parseFloat(document.getElementById('m_sellLow').value) || null;
+  t.sellReason = document.getElementById('m_sellReason').value;
+  t.buyComm = parseFloat(document.getElementById('m_buyComm').value) || -1;
+  t.sellComm = parseFloat(document.getElementById('m_sellComm').value) || (t.sellPrice ? -1 : 0);
+  t.review = document.getElementById('m_review').value;
+  const pnl = t.sellPrice ? (t.sellPrice - t.buyPrice) * t.shares : null;
+  t.pnl = pnl;
+  t.pnlNet = pnl !== null ? pnl + t.buyComm + t.sellComm : null;
+  localStorage.setItem('trades', JSON.stringify(trades));
+  closeModal();
+  refreshAll();
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editingId = null;
+}
+
+// ========== RENDER ==========
+function renderTrades() {
+  const tbody = document.getElementById('tradeBody');
+  const empty = document.getElementById('emptyState');
+  if (!trades.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  tbody.innerHTML = trades.slice().reverse().map((t,i) => {
+    const buyRating = t.dayHigh && t.dayLow ? ((t.dayHigh-t.buyPrice)/(t.dayHigh-t.dayLow)*100).toFixed(0)+'%' : '—';
+    const sellRating = t.sellHigh && t.sellLow && t.sellPrice ? ((t.sellPrice-t.sellLow)/(t.sellHigh-t.sellLow)*100).toFixed(0)+'%' : '—';
+    const pnlDisp = t.pnlNet !== null && t.pnlNet !== undefined
+      ? `<span class="${t.pnlNet>=0?'pnl-pos':'pnl-neg'}">$${t.pnlNet.toFixed(2)}</span>` : '—';
+    const status = t.sellPrice
+      ? (t.pnlNet >= 0 ? '<span class="badge badge-win">盈利</span>' : '<span class="badge badge-loss">亏损</span>')
+      : '<span class="badge badge-open">持仓中</span>';
+    return `<tr onclick="openEditModal(${t.id})">
+      <td class="mono">${trades.length-i}</td>
+      <td style="font-weight:700;color:var(--accent3)">${t.stock}</td>
+      <td class="mono">$${t.buyPrice.toFixed(3)}</td>
+      <td class="mono" style="color:var(--red)">$${t.stopLoss.toFixed(3)}</td>
+      <td class="mono" style="color:var(--green)">${t.targetPrice ? '$'+t.targetPrice.toFixed(2) : '—'}</td>
+      <td class="mono">${t.shares}</td>
+      <td class="mono" style="color:${parseFloat(buyRating)>=50?'var(--green)':'var(--yellow)'}">${buyRating}</td>
+      <td class="mono">${t.usedStop != null ? '$'+t.usedStop.toFixed(0) : '—'}</td>
+      <td class="mono">${t.sellPrice ? '$'+t.sellPrice.toFixed(3) : '—'}</td>
+      <td class="mono">${sellRating}</td>
+      <td>${pnlDisp}</td>
+      <td>${status}</td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteTrade(${t.id})">删除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderBanner() {
+  const s = getSettings();
+  const used = getMonthLosses(s.month);
+  const limit6 = s.total * (s.monthStop/100);
+  const remain = Math.max(0, limit6 - used);
+  const usedPct = limit6 > 0 ? Math.min(100, used/limit6*100) : 0;
+
+  document.getElementById('bannerTotal').textContent = s.total ? `$${s.total.toLocaleString()}` : '未设置';
+  document.getElementById('banner2pct').textContent = s.total ? `$${(s.total*s.singleStop/100).toFixed(0)}` : '—';
+  document.getElementById('banner6pct').textContent = s.total ? `$${limit6.toFixed(0)}` : '—';
+  document.getElementById('bannerUsed').textContent = `$${used.toFixed(2)}`;
+  document.getElementById('bannerUsed').className = 'fund-value ' + (usedPct > 80 ? 'danger' : usedPct > 50 ? '' : 'safe');
+  document.getElementById('bannerRemain').textContent = `$${remain.toFixed(2)}`;
+  document.getElementById('bannerRemain').className = 'fund-value ' + (remain <= 0 ? 'danger' : remain < limit6*0.3 ? '' : 'safe');
+  document.getElementById('riskBar').style.width = usedPct+'%';
+  document.getElementById('riskBar').style.background = usedPct > 80 ? 'var(--red)' : usedPct > 50 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('riskPct').textContent = usedPct.toFixed(0)+'%';
+
+  const alertZone = document.getElementById('alertZone');
+  if (!s.total) {
+    alertZone.innerHTML = '<div class="alert alert-warn">⚠️ 请先在「设置」中填写总资金，才能自动计算2%和6%止损额度</div>';
+  } else if (remain <= 0) {
+    alertZone.innerHTML = '<div class="alert alert-danger">🛑 本月止损额度已耗尽（6%规则），请停止交易！</div>';
+  } else if (usedPct > 80) {
+    alertZone.innerHTML = `<div class="alert alert-warn">⚠️ 本月已使用止损额度 ${usedPct.toFixed(0)}%，接近月度上限，请谨慎操作</div>`;
+  } else {
+    alertZone.innerHTML = '';
+  }
+}
+
+function renderStats() {
+  const s = getSettings();
+  const closed = trades.filter(t => t.pnlNet !== null && t.pnlNet !== undefined);
+  const wins = closed.filter(t => t.pnlNet > 0);
+  const losses = closed.filter(t => t.pnlNet < 0);
+  const totalPnl = closed.reduce((sum, t) => sum + t.pnlNet, 0);
+  const winRate = closed.length ? (wins.length/closed.length*100).toFixed(1) : 0;
+  const avgWin = wins.length ? wins.reduce((s,t)=>s+t.pnlNet,0)/wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((s,t)=>s+t.pnlNet,0)/losses.length : 0;
+  const rr = avgWin && avgLoss ? Math.abs(avgWin/avgLoss).toFixed(2) : '—';
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-val ${totalPnl>=0?'pnl-pos':'pnl-neg'}">$${totalPnl.toFixed(2)}</div><div class="stat-label">总盈亏</div></div>
+    <div class="stat-card"><div class="stat-val">${closed.length}</div><div class="stat-label">已结交易</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${winRate}%</div><div class="stat-label">胜率</div></div>
+    <div class="stat-card"><div class="stat-val pnl-pos">$${avgWin.toFixed(2)}</div><div class="stat-label">平均盈利</div></div>
+    <div class="stat-card"><div class="stat-val pnl-neg">$${avgLoss.toFixed(2)}</div><div class="stat-label">平均亏损</div></div>
+    <div class="stat-card"><div class="stat-val">${rr}</div><div class="stat-label">盈亏比 (R:R)</div></div>
+    <div class="stat-card"><div class="stat-val">${trades.filter(t=>!t.sellPrice).length}</div><div class="stat-label">持仓中</div></div>
+    <div class="stat-card"><div class="stat-val">${trades.length}</div><div class="stat-label">总交易数</div></div>
+  `;
+
+  const used = getMonthLosses(s.month);
+  const limit6 = s.total * (s.monthStop/100);
+  const limit2 = s.total * (s.singleStop/100);
+  const remain = Math.max(0, limit6 - used);
+  document.getElementById('monthlyReport').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">
+      <div><div class="computed-label">统计月份</div><div class="computed-val">${s.month}</div></div>
+      <div><div class="computed-label">月度已亏损</div><div class="computed-val danger">$${used.toFixed(2)}</div></div>
+      <div><div class="computed-label">单笔止损上限(2%)</div><div class="computed-val">$${limit2.toFixed(2)}</div></div>
+      <div><div class="computed-label">月度止损上限(6%)</div><div class="computed-val">$${limit6.toFixed(2)}</div></div>
+      <div><div class="computed-label">剩余额度</div><div class="computed-val ${remain<=0?'danger':''} ">$${remain.toFixed(2)}</div></div>
+      <div><div class="computed-label">使用比例</div><div class="computed-val">${limit6>0?(used/limit6*100).toFixed(1):0}%</div></div>
+    </div>
+  `;
+}
+
+function refreshAll() {
+  renderBanner();
+  renderTrades();
+  renderStats();
+}
+
+// ========== UI HELPERS ==========
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['trades','add','stats','settings'];
+  const idx = tabs.indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name === 'add') computeFields();
+  if (name === 'settings') loadSettingsUI();
+}
+
+function openAddModal() { switchTab('add'); }
+
+function clearForm() {
+  ['f_stock','f_buyPrice','f_buyDate','f_dayHigh','f_dayLow','f_stopLoss','f_stopReason',
+   'f_target','f_targetPct','f_shares','f_chanHigh','f_chanLow',
+   'f_sellPrice','f_sellDate','f_sellHigh','f_sellLow','f_sellReason',
+   'f_buyComm','f_sellComm','f_review'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  computeFields();
+}
+
+function showAlert(containerId, msg, type) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({trades, settings}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `trade_journal_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function clearAll() {
+  if (confirm('确定要清除所有交易数据？此操作不可恢复！')) {
+    trades = [];
+    localStorage.removeItem('trades');
+    refreshAll();
+  }
+}
+
+// ========== INIT ==========
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+loadSettingsUI();
+refreshAll();
+
+// Set default buy date to today
+document.getElementById('f_buyDate').value = new Date().toISOString().slice(0,10);
+// Set default month in settings
+if (!settings.month) {
+  const m = new Date().toISOString().slice(0,7);
+  document.getElementById('s_month').value = m;
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
