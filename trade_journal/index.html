@@ -64,6 +64,10 @@
   .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
   .btn-ghost:hover { border-color:var(--text); color:var(--text); }
   .btn-row { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+  .panel-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .month-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .month-indicator { font-size:12px; color:var(--muted); font-family:'Space Mono',monospace; letter-spacing:0.04em; }
+  .month-picker { max-width:180px; }
   .table-wrap { overflow-x:auto; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
   thead tr { border-bottom:2px solid var(--border); }
@@ -194,6 +198,12 @@
 
   <div id="panel-trades" class="panel active">
     <div id="tradeAlertZone"></div>
+    <div class="panel-toolbar">
+      <div class="month-toolbar">
+        <span class="month-indicator" id="tradesMonthLabel">当前查看月份：—</span>
+        <input class="month-picker" type="month" id="tradesMonthPicker" onchange="setReportMonth(this.value)">
+      </div>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -273,6 +283,12 @@
   </div>
 
   <div id="panel-stats" class="panel">
+    <div class="panel-toolbar">
+      <div class="month-toolbar">
+        <span class="month-indicator" id="statsMonthLabel">当前查看月份：—</span>
+        <input class="month-picker" type="month" id="statsMonthPicker" onchange="setReportMonth(this.value)">
+      </div>
+    </div>
     <div class="stats-grid" id="statsGrid"></div>
     <div class="form-card">
       <div class="form-title">月度止损规则状态</div>
@@ -699,6 +715,40 @@ function getSettings() {
   return normalizeSettings(settings);
 }
 
+function getTradeMonth(t) {
+  return (t.sell_date || t.buy_date || '').slice(0, 7);
+}
+
+function getCurrentReportMonth() {
+  return getSettings().month;
+}
+
+function getTradesForMonth(month) {
+  return trades.filter(t => getTradeMonth(t) === month);
+}
+
+function syncMonthPickers() {
+  const month = getCurrentReportMonth();
+  const tradesPicker = document.getElementById('tradesMonthPicker');
+  const statsPicker = document.getElementById('statsMonthPicker');
+  const tradesLabel = document.getElementById('tradesMonthLabel');
+  const statsLabel = document.getElementById('statsMonthLabel');
+  if (tradesPicker) tradesPicker.value = month;
+  if (statsPicker) statsPicker.value = month;
+  if (tradesLabel) tradesLabel.textContent = `当前查看月份：${month}`;
+  if (statsLabel) statsLabel.textContent = `当前查看月份：${month}`;
+}
+
+function setReportMonth(month) {
+  if (!month) return;
+  settings.month = month;
+  cacheSettings();
+  loadSettingsUI();
+  refreshAll();
+  setSettingsSyncStatus('warn', settingsTableReady ? '正在同步设置到 Supabase…' : '正在尝试保存设置到 Supabase…');
+  scheduleSettingsSave();
+}
+
 function updateRiskRuleLabels() {
   const s = getSettings();
   const maxLossLabel = document.getElementById('cMaxLossLabel');
@@ -755,12 +805,12 @@ function loadSettingsUI() {
   document.getElementById('s_monthStop').value=s.monthStop;
   document.getElementById('s_month').value=s.month;
   updateRiskRuleLabels();
+  syncMonthPickers();
 }
 
 // ── Compute ───────────────────────────────────────────────────
 function getMonthLosses(month) {
-  return trades
-    .filter(t => (t.sell_date || t.buy_date || '').slice(0,7) === month)
+  return getTradesForMonth(month)
     .reduce((sum, t) => {
       const net = getTradeNetPnl(t);
       return net !== null && net < 0 ? sum + Math.abs(net) : sum;
@@ -959,9 +1009,10 @@ function closeModal() { document.getElementById('editModal').classList.remove('o
 // ── Render ───────────────────────────────────────────────────
 function renderTrades() {
   const tbody=document.getElementById('tradeBody'), empty=document.getElementById('emptyState');
-  if(!trades.length){tbody.innerHTML='';empty.style.display='block';return;}
+  const monthTrades = getTradesForMonth(getCurrentReportMonth());
+  if(!monthTrades.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=trades.map((t,i)=>{
+  tbody.innerHTML=monthTrades.map((t,i)=>{
     const tradeId = escapeHtml(t.id);
     const bp=parseFloat(t.buy_price),dh=parseFloat(t.day_high),dl=parseFloat(t.day_low);
     const sh=parseFloat(t.sell_high),sl=parseFloat(t.sell_low),sp=parseFloat(t.sell_price);
@@ -971,7 +1022,7 @@ function renderTrades() {
     const pn=getTradeNetPnl(t),pd=pn!==null?`<span class="${pn>=0?'pnl-pos':'pnl-neg'}">$${parseFloat(pn).toFixed(2)}</span>`:'—';
     const st=t.sell_price?(pn>=0?'<span class="badge badge-win">盈利</span>':'<span class="badge badge-loss">亏损</span>'):'<span class="badge badge-open">持仓中</span>';
     return `<tr class="trade-row" data-trade-id="${tradeId}">
-      <td class="mono">${trades.length-i}</td>
+      <td class="mono">${monthTrades.length-i}</td>
       <td style="font-weight:700;color:var(--accent3)">${escapeHtml(t.stock)}</td>
       <td class="mono">$${parseFloat(t.buy_price).toFixed(3)}</td>
       <td class="mono" style="color:var(--red)">$${parseFloat(t.stop_loss).toFixed(3)}</td>
@@ -1007,7 +1058,7 @@ function renderBanner() {
 }
 
 function renderStats() {
-  const s=getSettings(), cl=trades.filter(t=>getTradeNetPnl(t)!==null);
+  const s=getSettings(), monthTrades = getTradesForMonth(getCurrentReportMonth()), cl=monthTrades.filter(t=>getTradeNetPnl(t)!==null);
   const wins=cl.filter(t=>getTradeNetPnl(t)>0), losses=cl.filter(t=>getTradeNetPnl(t)<0);
   const tp=cl.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0);
   const wr=cl.length?(wins.length/cl.length*100).toFixed(1):0;
@@ -1021,8 +1072,8 @@ function renderStats() {
     <div class="stat-card"><div class="stat-val pnl-pos">$${aw.toFixed(2)}</div><div class="stat-label">平均盈利</div></div>
     <div class="stat-card"><div class="stat-val pnl-neg">$${al.toFixed(2)}</div><div class="stat-label">平均亏损</div></div>
     <div class="stat-card"><div class="stat-val">${rr}</div><div class="stat-label">盈亏比 R:R</div></div>
-    <div class="stat-card"><div class="stat-val">${trades.filter(t=>!t.sell_price).length}</div><div class="stat-label">持仓中</div></div>
-    <div class="stat-card"><div class="stat-val">${trades.length}</div><div class="stat-label">总交易数</div></div>`;
+    <div class="stat-card"><div class="stat-val">${monthTrades.filter(t=>!t.sell_price).length}</div><div class="stat-label">持仓中</div></div>
+    <div class="stat-card"><div class="stat-val">${monthTrades.length}</div><div class="stat-label">本月交易数</div></div>`;
   const used=getMonthLosses(s.month), l6=s.total*(s.monthStop/100);
   document.getElementById('monthlyReport').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">
