@@ -94,6 +94,10 @@
   .empty { text-align:center; padding:80px 0; color:var(--muted); }
   .empty-icon { font-size:48px; margin-bottom:16px; }
   .empty-text { font-family:'Space Mono',monospace; font-size:13px; }
+  #bootScreen { padding:32px; }
+  .boot-screen { max-width:520px; margin:60px auto; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:40px; }
+  .boot-screen h2 { font-family:'Space Mono',monospace; font-size:16px; color:var(--accent); margin-bottom:8px; }
+  .boot-screen p { font-size:13px; color:var(--muted); line-height:1.7; }
   /* Config gate */
   #configGate { padding:32px; }
   .config-gate { max-width:520px; margin:60px auto; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:40px; }
@@ -109,6 +113,13 @@
 </style>
 </head>
 <body>
+
+<div id="bootScreen">
+  <div class="boot-screen">
+    <h2>Trade Journal 正在启动</h2>
+    <p id="bootMessage">正在初始化页面并检查数据库连接…</p>
+  </div>
+</div>
 
 <!-- CONFIG GATE -->
 <div id="configGate" style="display:none">
@@ -291,39 +302,130 @@
 </div>
 
 <script>
+const APP_CONFIG = {
+  supabaseUrl: 'https://doimcpmpfkzlmyzlyhot.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvaW1jcG1wZmt6bG15emx5aG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTc5NTAsImV4cCI6MjA5MDQ3Mzk1MH0.5Ial5fjTofMgF8aeQn_fnD7SEwE_QjH7B3504XQfwRg',
+  tableName: 'trades'
+};
+
+const DB_TABLE = (APP_CONFIG.tableName || 'trades').trim();
 let supabase = null, trades = [], editingId = null;
-let settings = JSON.parse(localStorage.getItem('tradeSettings') || '{}');
+let settings = readStoredJson('tradeSettings', {});
+
+function safeStorageGet(key) {
+  try { return localStorage.getItem(key); }
+  catch (_) { return null; }
+}
+
+function safeStorageSet(key, value) {
+  try { localStorage.setItem(key, value); }
+  catch (_) {}
+}
+
+function safeStorageRemove(key) {
+  try { localStorage.removeItem(key); }
+  catch (_) {}
+}
+
+function readStoredJson(key, fallback) {
+  const raw = safeStorageGet(key);
+  if (!raw) return fallback;
+  try { return JSON.parse(raw); }
+  catch (_) { return fallback; }
+}
+
+function getInlineConfigValue(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function getSupabaseConfig() {
+  return {
+    url: getInlineConfigValue(APP_CONFIG.supabaseUrl) || (safeStorageGet('sb_url') || '').trim(),
+    key: getInlineConfigValue(APP_CONFIG.supabaseAnonKey) || (safeStorageGet('sb_key') || '').trim()
+  };
+}
+
+function setView(view, bootMessage) {
+  const boot = document.getElementById('bootScreen');
+  const gate = document.getElementById('configGate');
+  const app = document.getElementById('mainApp');
+  if (bootMessage) document.getElementById('bootMessage').textContent = bootMessage;
+  boot.style.display = view === 'boot' ? 'block' : 'none';
+  gate.style.display = view === 'config' ? 'block' : 'none';
+  app.style.display = view === 'app' ? 'block' : 'none';
+}
+
+function prefillConfigInputs() {
+  const { url, key } = getSupabaseConfig();
+  const urlInput = document.getElementById('cfg_url');
+  const keyInput = document.getElementById('cfg_key');
+  if (urlInput) urlInput.value = url;
+  if (keyInput) keyInput.value = key;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sameId(a, b) {
+  return String(a) === String(b);
+}
+
+function parseNumberValue(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (text === '') return null;
+  const num = Number(text);
+  return Number.isFinite(num) ? num : null;
+}
+
+function getNumberInputValue(id) {
+  const el = document.getElementById(id);
+  return el ? parseNumberValue(el.value) : null;
+}
 
 // ── Config ──────────────────────────────────────────────────
 function saveConfig() {
   const url = document.getElementById('cfg_url').value.trim();
   const key = document.getElementById('cfg_key').value.trim();
   if (!url || !key) { document.getElementById('cfgError').innerHTML='<div class="alert alert-danger">请填写 URL 和 Key</div>'; return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
+  safeStorageSet('sb_url', url);
+  safeStorageSet('sb_key', key);
   document.getElementById('cfgBtn').disabled = true;
   document.getElementById('cfgBtn').textContent = '连接中…';
+  setView('boot', '正在验证 Supabase 配置…');
   initSupabase();
 }
-function resetConfig() { localStorage.removeItem('sb_url'); localStorage.removeItem('sb_key'); location.reload(); }
+function resetConfig() { safeStorageRemove('sb_url'); safeStorageRemove('sb_key'); location.reload(); }
 
 async function initSupabase() {
-  const url = localStorage.getItem('sb_url'), key = localStorage.getItem('sb_key');
-  if (!url || !key) { document.getElementById('configGate').style.display='block'; return; }
+  const { url, key } = getSupabaseConfig();
+  prefillConfigInputs();
+  if (!url || !key) {
+    setView('config');
+    document.getElementById('cfgError').innerHTML = '';
+    return;
+  }
   try {
+    if (!window.supabase || !window.supabase.createClient) {
+      throw new Error('Supabase SDK 未加载，请检查网络或稍后重试');
+    }
     supabase = window.supabase.createClient(url, key);
-    const { error } = await supabase.from('trades').select('id',{count:'exact',head:true});
+    const { error } = await supabase.from(DB_TABLE).select('*', { count:'exact', head:true });
     if (error) throw error;
     setDbStatus(true);
-    document.getElementById('configGate').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    setView('app');
     await loadTrades();
     initUI();
   } catch(e) {
     setDbStatus(false);
-    document.getElementById('configGate').style.display = 'block';
-    document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('cfgError').innerHTML = `<div class="alert alert-danger">连接失败：${e.message||e}。请检查 URL 和 Key，并确认已在 Supabase 中建好 trades 表。</div>`;
+    setView('config');
+    document.getElementById('cfgError').innerHTML = `<div class="alert alert-danger">连接失败：${escapeHtml(e.message||e)}。请检查 URL、Key，以及 Supabase 中是否存在 <span class="mono">${escapeHtml(DB_TABLE)}</span> 表。</div>`;
     const btn = document.getElementById('cfgBtn');
     if (btn) { btn.disabled=false; btn.textContent='连接数据库'; }
   }
@@ -337,36 +439,43 @@ function setDbStatus(ok) {
 
 // ── DB ops ───────────────────────────────────────────────────
 async function loadTrades() {
-  const { data, error } = await supabase.from('trades').select('*').order('created_at',{ascending:false});
-  if (error) { console.error(error); return; }
+  let result = await supabase.from(DB_TABLE).select('*').order('created_at', { ascending:false });
+  if (result.error) {
+    result = await supabase.from(DB_TABLE).select('*').order('buy_date', { ascending:false });
+  }
+  if (result.error) {
+    result = await supabase.from(DB_TABLE).select('*');
+  }
+  const { data, error } = result;
+  if (error) { console.error(error); showAlert('tradeAlertZone', '读取交易记录失败：' + error.message, 'danger'); return; }
   trades = data || [];
   refreshAll();
 }
 async function insertTrade(t) {
-  const { data, error } = await supabase.from('trades').insert([toRow(t)]).select().single();
+  const { data, error } = await supabase.from(DB_TABLE).insert([toRow(t)]).select().single();
   if (error) throw error;
   trades.unshift(data);
 }
 async function updateTradeInDb(id, u) {
-  const { error } = await supabase.from('trades').update(u).eq('id',id);
+  const { error } = await supabase.from(DB_TABLE).update(u).eq('id',id);
   if (error) throw error;
 }
 async function deleteTradeInDb(id) {
-  const { error } = await supabase.from('trades').delete().eq('id',id);
+  const { error } = await supabase.from(DB_TABLE).delete().eq('id',id);
   if (error) throw error;
 }
 function toRow(t) {
   return {
     stock:t.stock, buy_price:t.buyPrice, shares:t.shares, stop_loss:t.stopLoss,
     stop_reason:t.stopReason||null, buy_date:t.buyDate||null,
-    day_high:t.dayHigh||null, day_low:t.dayLow||null,
-    target_price:t.targetPrice||null, target_pct:t.targetPct||null,
-    chan_high:t.chanHigh||null, chan_low:t.chanLow||null,
-    sell_price:t.sellPrice||null, sell_date:t.sellDate||null,
-    sell_high:t.sellHigh||null, sell_low:t.sellLow||null,
-    sell_reason:t.sellReason||null, buy_comm:t.buyComm||-1,
-    sell_comm:t.sellComm||0, review:t.review||null,
-    used_stop:t.usedStop||null, pnl:t.pnl||null, pnl_net:t.pnlNet||null
+    day_high:t.dayHigh ?? null, day_low:t.dayLow ?? null,
+    target_price:t.targetPrice ?? null, target_pct:t.targetPct ?? null,
+    chan_high:t.chanHigh ?? null, chan_low:t.chanLow ?? null,
+    sell_price:t.sellPrice ?? null, sell_date:t.sellDate||null,
+    sell_high:t.sellHigh ?? null, sell_low:t.sellLow ?? null,
+    sell_reason:t.sellReason||null, buy_comm:t.buyComm ?? -1,
+    sell_comm:t.sellComm ?? 0, review:t.review||null,
+    used_stop:t.usedStop ?? null, pnl:t.pnl ?? null, pnl_net:t.pnlNet ?? null
   };
 }
 
@@ -375,11 +484,14 @@ function getSettings() {
   return { total:parseFloat(settings.total)||0, singleStop:parseFloat(settings.singleStop)||2, monthStop:parseFloat(settings.monthStop)||6, month:settings.month||new Date().toISOString().slice(0,7) };
 }
 function saveSettings() {
-  settings.total=parseFloat(document.getElementById('s_total').value)||settings.total;
-  settings.singleStop=parseFloat(document.getElementById('s_singleStop').value)||settings.singleStop;
-  settings.monthStop=parseFloat(document.getElementById('s_monthStop').value)||settings.monthStop;
+  const totalValue = getNumberInputValue('s_total');
+  const singleStopValue = getNumberInputValue('s_singleStop');
+  const monthStopValue = getNumberInputValue('s_monthStop');
+  settings.total=totalValue ?? 0;
+  settings.singleStop=singleStopValue ?? 2;
+  settings.monthStop=monthStopValue ?? 6;
   settings.month=document.getElementById('s_month').value||settings.month;
-  localStorage.setItem('tradeSettings',JSON.stringify(settings));
+  safeStorageSet('tradeSettings',JSON.stringify(settings));
   refreshAll();
 }
 function loadSettingsUI() {
@@ -428,29 +540,31 @@ function computeFields() {
 // ── Trade CRUD ───────────────────────────────────────────────
 async function saveTrade() {
   const stock=document.getElementById('f_stock').value.trim().toUpperCase();
-  const buyPrice=parseFloat(document.getElementById('f_buyPrice').value);
-  const shares=parseInt(document.getElementById('f_shares').value);
-  const stopLoss=parseFloat(document.getElementById('f_stopLoss').value);
+  const buyPrice=getNumberInputValue('f_buyPrice');
+  const shares=getNumberInputValue('f_shares');
+  const stopLoss=getNumberInputValue('f_stopLoss');
   if(!stock||!buyPrice||!shares||!stopLoss){showAlert('addAlert','请填写必填项：股票代码、买入价、股数、止损价','danger');return;}
   const s=getSettings(), maxLoss=s.total*(s.singleStop/100), usedStop=(buyPrice-stopLoss)*shares;
   if(s.total&&usedStop>maxLoss&&!confirm(`止损额度 $${usedStop.toFixed(2)} 超过单笔${s.singleStop}%上限 $${maxLoss.toFixed(2)}，确定继续？`)) return;
-  const sellPrice=parseFloat(document.getElementById('f_sellPrice').value)||null;
-  const buyComm=parseFloat(document.getElementById('f_buyComm').value)||-1;
-  const sellComm=parseFloat(document.getElementById('f_sellComm').value)||(sellPrice?-1:0);
+  const sellPrice=getNumberInputValue('f_sellPrice');
+  const buyCommInput=getNumberInputValue('f_buyComm');
+  const sellCommInput=getNumberInputValue('f_sellComm');
+  const buyComm=buyCommInput ?? -1;
+  const sellComm=sellCommInput ?? (sellPrice!==null?-1:0);
   const pnl=sellPrice?(sellPrice-buyPrice)*shares:null;
   const pnlNet=pnl!==null?pnl+buyComm+sellComm:null;
   const trade={stock,buyPrice,shares,stopLoss,usedStop,pnl,pnlNet,
     stopReason:document.getElementById('f_stopReason').value,
     buyDate:document.getElementById('f_buyDate').value||null,
-    dayHigh:parseFloat(document.getElementById('f_dayHigh').value)||null,
-    dayLow:parseFloat(document.getElementById('f_dayLow').value)||null,
-    targetPrice:parseFloat(document.getElementById('f_target').value)||null,
-    targetPct:parseFloat(document.getElementById('f_targetPct').value)||null,
-    chanHigh:parseFloat(document.getElementById('f_chanHigh').value)||null,
-    chanLow:parseFloat(document.getElementById('f_chanLow').value)||null,
+    dayHigh:getNumberInputValue('f_dayHigh'),
+    dayLow:getNumberInputValue('f_dayLow'),
+    targetPrice:getNumberInputValue('f_target'),
+    targetPct:getNumberInputValue('f_targetPct'),
+    chanHigh:getNumberInputValue('f_chanHigh'),
+    chanLow:getNumberInputValue('f_chanLow'),
     sellPrice,sellDate:document.getElementById('f_sellDate').value||null,
-    sellHigh:parseFloat(document.getElementById('f_sellHigh').value)||null,
-    sellLow:parseFloat(document.getElementById('f_sellLow').value)||null,
+    sellHigh:getNumberInputValue('f_sellHigh'),
+    sellLow:getNumberInputValue('f_sellLow'),
     sellReason:document.getElementById('f_sellReason').value,
     buyComm,sellComm,review:document.getElementById('f_review').value};
   const btn=document.getElementById('saveBtn');
@@ -464,12 +578,12 @@ async function saveTrade() {
 
 async function deleteTrade(id) {
   if(!confirm('确定删除这条记录？')) return;
-  try { await deleteTradeInDb(id); trades=trades.filter(t=>t.id!==id); refreshAll(); }
+  try { await deleteTradeInDb(id); trades=trades.filter(t=>!sameId(t.id, id)); refreshAll(); }
   catch(e) { showAlert('tradeAlertZone','删除失败：'+e.message,'danger'); }
 }
 
 function openEditModal(id) {
-  const t=trades.find(x=>x.id===id); if(!t) return;
+  const t=trades.find(x=>sameId(x.id, id)); if(!t) return;
   editingId=id;
   document.getElementById('editModal').classList.add('open');
   const pnlNet=t.pnl_net;
@@ -493,15 +607,17 @@ function openEditModal(id) {
 }
 
 async function updateTrade() {
-  const t=trades.find(x=>x.id===editingId); if(!t) return;
-  const sp=parseFloat(document.getElementById('m_sell').value)||null;
-  const bc=parseFloat(document.getElementById('m_buyComm').value)||t.buy_comm;
-  const sc=parseFloat(document.getElementById('m_sellComm').value)||t.sell_comm;
+  const t=trades.find(x=>sameId(x.id, editingId)); if(!t) return;
+  const sp=getNumberInputValue('m_sell');
+  const bcInput=getNumberInputValue('m_buyComm');
+  const scInput=getNumberInputValue('m_sellComm');
+  const bc=bcInput ?? (parseNumberValue(t.buy_comm) ?? -1);
+  const sc=scInput ?? (parseNumberValue(t.sell_comm) ?? 0);
   const pnl=sp?(sp-t.buy_price)*t.shares:null;
   const pnlNet=pnl!==null?pnl+bc+sc:null;
   const u={sell_price:sp,sell_date:document.getElementById('m_sellDate').value||null,
-    sell_high:parseFloat(document.getElementById('m_sellHigh').value)||null,
-    sell_low:parseFloat(document.getElementById('m_sellLow').value)||null,
+    sell_high:getNumberInputValue('m_sellHigh'),
+    sell_low:getNumberInputValue('m_sellLow'),
     sell_reason:document.getElementById('m_sellReason').value,
     buy_comm:bc,sell_comm:sc,review:document.getElementById('m_review').value,pnl,pnl_net:pnlNet};
   const btn=document.getElementById('updateBtn');
@@ -519,15 +635,16 @@ function renderTrades() {
   if(!trades.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=trades.map((t,i)=>{
+    const tradeId = escapeHtml(t.id);
     const bp=parseFloat(t.buy_price),dh=parseFloat(t.day_high),dl=parseFloat(t.day_low);
     const sh=parseFloat(t.sell_high),sl=parseFloat(t.sell_low),sp=parseFloat(t.sell_price);
     const br=dh&&dl?((dh-bp)/(dh-dl)*100).toFixed(0)+'%':'—';
     const sr=sh&&sl&&sp?((sp-sl)/(sh-sl)*100).toFixed(0)+'%':'—';
     const pn=t.pnl_net,pd=pn!==null?`<span class="${pn>=0?'pnl-pos':'pnl-neg'}">$${parseFloat(pn).toFixed(2)}</span>`:'—';
     const st=t.sell_price?(pn>=0?'<span class="badge badge-win">盈利</span>':'<span class="badge badge-loss">亏损</span>'):'<span class="badge badge-open">持仓中</span>';
-    return `<tr onclick="openEditModal(${t.id})">
+    return `<tr class="trade-row" data-trade-id="${tradeId}">
       <td class="mono">${trades.length-i}</td>
-      <td style="font-weight:700;color:var(--accent3)">${t.stock}</td>
+      <td style="font-weight:700;color:var(--accent3)">${escapeHtml(t.stock)}</td>
       <td class="mono">$${parseFloat(t.buy_price).toFixed(3)}</td>
       <td class="mono" style="color:var(--red)">$${parseFloat(t.stop_loss).toFixed(3)}</td>
       <td class="mono" style="color:var(--green)">${t.target_price?'$'+parseFloat(t.target_price).toFixed(2):'—'}</td>
@@ -536,7 +653,7 @@ function renderTrades() {
       <td class="mono">${t.used_stop!=null?'$'+parseFloat(t.used_stop).toFixed(0):'—'}</td>
       <td class="mono">${t.sell_price?'$'+parseFloat(t.sell_price).toFixed(3):'—'}</td>
       <td class="mono">${sr}</td><td>${pd}</td><td>${st}</td>
-      <td onclick="event.stopPropagation()"><button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteTrade(${t.id})">删除</button></td>
+      <td><button class="btn btn-danger delete-trade-btn" style="padding:4px 10px;font-size:11px" data-delete-id="${tradeId}">删除</button></td>
     </tr>`;
   }).join('');
 }
@@ -615,7 +732,10 @@ function showAlert(id,msg,type) {
   setTimeout(()=>{el.innerHTML='';},4000);
 }
 async function exportData() {
-  const {data}=await supabase.from('trades').select('*').order('created_at');
+  let result = await supabase.from(DB_TABLE).select('*').order('created_at');
+  if (result.error) result = await supabase.from(DB_TABLE).select('*');
+  const { data, error } = result;
+  if (error) { showAlert('tradeAlertZone', '导出失败：' + error.message, 'danger'); return; }
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download=`trade_journal_${new Date().toISOString().slice(0,10)}.json`;
@@ -623,18 +743,30 @@ async function exportData() {
 }
 async function clearAll() {
   if(!confirm('确定删除数据库中全部记录？')) return;
-  await supabase.from('trades').delete().neq('id',0);
+  const { error } = await supabase.from(DB_TABLE).delete().not('id', 'is', null);
+  if (error) { showAlert('tradeAlertZone', '清除失败：' + error.message, 'danger'); return; }
   trades=[]; refreshAll();
 }
 function initUI() {
   document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   document.getElementById('f_buyDate').value=new Date().toISOString().slice(0,10);
-  if(!settings.month){settings.month=new Date().toISOString().slice(0,7);localStorage.setItem('tradeSettings',JSON.stringify(settings));}
+  if(!settings.month){settings.month=new Date().toISOString().slice(0,7);safeStorageSet('tradeSettings',JSON.stringify(settings));}
   loadSettingsUI();
   document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  document.getElementById('tradeBody').addEventListener('click', function (e) {
+    const deleteBtn = e.target.closest('.delete-trade-btn');
+    if (deleteBtn) {
+      e.stopPropagation();
+      deleteTrade(deleteBtn.dataset.deleteId);
+      return;
+    }
+    const row = e.target.closest('.trade-row');
+    if (row) openEditModal(row.dataset.tradeId);
+  });
 }
 
 // ── Boot ──────────────────────────────────────────────────────
+setView('boot', '正在初始化页面并检查数据库连接…');
 initSupabase();
 </script>
 </body>
