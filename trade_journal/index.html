@@ -521,6 +521,54 @@ function applyRecommendedShares() {
   computeFields();
 }
 
+function updateModalComputedFields() {
+  const t = trades.find(x => sameId(x.id, editingId)); if (!t) return;
+  const s = getSettings();
+  const buyPrice = getNumberInputValue('m_buyPrice');
+  const stopLoss = getNumberInputValue('m_stopLoss');
+  const sharesRaw = getNumberInputValue('m_shares');
+  const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
+  const dayHigh = getNumberInputValue('m_dayHigh');
+  const dayLow = getNumberInputValue('m_dayLow');
+  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
+  const maxLoss = s.total * (s.singleStop / 100);
+  const targetPrice = getTargetPrice(buyPrice, targetPct);
+  const buyComm = getCommissionValue(getNumberInputValue('m_buyComm'), getCommissionValue(t.buy_comm, 1));
+  const sellComm = getCommissionValue(getNumberInputValue('m_sellComm'), getCommissionValue(t.sell_comm, 0));
+  const sellPrice = getNumberInputValue('m_sell');
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
+  const pnlNet = calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares), buyComm, sellComm);
+
+  const targetInput = document.getElementById('m_target');
+  if (targetInput) targetInput.value = targetPrice !== null ? targetPrice.toFixed(3) : '';
+
+  const recommendedEl = document.getElementById('m_recommendedShares');
+  if (recommendedEl) recommendedEl.textContent = recommendedShares !== null ? `${recommendedShares.toLocaleString()} 股` : '—';
+
+  const usedStopEl = document.getElementById('m_usedStop');
+  if (usedStopEl) usedStopEl.textContent = usedStop !== null ? `$${usedStop.toFixed(2)}` : '—';
+
+  const pnlEl = document.getElementById('m_livePnl');
+  if (pnlEl) {
+    pnlEl.textContent = pnlNet !== null ? `$${pnlNet.toFixed(2)}` : '持仓中';
+    pnlEl.className = `computed-val${pnlNet === null ? '' : pnlNet >= 0 ? '' : ' danger'}`;
+  }
+
+  const ratingEl = document.getElementById('m_buyRating');
+  if (ratingEl) {
+    if (buyPrice !== null && dayHigh !== null && dayLow !== null && dayHigh !== dayLow) {
+      const rating = ((dayHigh - buyPrice) / (dayHigh - dayLow) * 100).toFixed(0);
+      ratingEl.textContent = `${rating}%`;
+      ratingEl.className = `computed-val${parseInt(rating, 10) >= 50 ? '' : ' warn'}`;
+    } else {
+      ratingEl.textContent = '—';
+      ratingEl.className = 'computed-val';
+    }
+  }
+}
+
 function normalizeSettings(source = {}) {
   return {
     total: parseNumberValue(source.total) ?? 0,
@@ -723,8 +771,62 @@ function getCurrentReportMonth() {
   return getSettings().month;
 }
 
+function getTradeBuyMonth(t) {
+  return (t.buy_date || t.created_at || '').slice(0, 7);
+}
+
+function getTradeSellMonth(t) {
+  return (t.sell_date || '').slice(0, 7);
+}
+
+function isTradeRelevantToMonth(t, month) {
+  const buyMonth = getTradeBuyMonth(t);
+  const sellMonth = getTradeSellMonth(t);
+  if (!buyMonth) return false;
+  return buyMonth <= month && (!sellMonth || sellMonth >= month);
+}
+
+function isTradeOpenAtMonthEnd(t, month) {
+  const buyMonth = getTradeBuyMonth(t);
+  const sellMonth = getTradeSellMonth(t);
+  if (!buyMonth) return false;
+  return buyMonth <= month && (!sellMonth || sellMonth > month);
+}
+
+function getTradeUsedStop(t) {
+  const stored = parseNumberValue(t.used_stop);
+  if (stored !== null) return Math.abs(stored);
+  const riskPerShare = getRiskPerShare(parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss));
+  const shares = parseNumberValue(t.shares);
+  if (riskPerShare === null || shares === null) return 0;
+  return Math.abs(riskPerShare * shares);
+}
+
 function getTradesForMonth(month) {
-  return trades.filter(t => getTradeMonth(t) === month);
+  return trades.filter(t => isTradeRelevantToMonth(t, month));
+}
+
+function getClosedTradesForMonth(month) {
+  return trades.filter(t => getTradeSellMonth(t) === month);
+}
+
+function getOpenTradesForMonth(month) {
+  return trades.filter(t => isTradeOpenAtMonthEnd(t, month));
+}
+
+function getMonthRealizedLosses(month) {
+  return getClosedTradesForMonth(month).reduce((sum, t) => {
+    const net = getTradeNetPnl(t);
+    return net !== null && net < 0 ? sum + Math.abs(net) : sum;
+  }, 0);
+}
+
+function getMonthOpenRisk(month) {
+  return getOpenTradesForMonth(month).reduce((sum, t) => sum + getTradeUsedStop(t), 0);
+}
+
+function getMonthStopBudgetUsed(month) {
+  return getMonthRealizedLosses(month) + getMonthOpenRisk(month);
 }
 
 function syncMonthPickers() {
@@ -810,11 +912,7 @@ function loadSettingsUI() {
 
 // ── Compute ───────────────────────────────────────────────────
 function getMonthLosses(month) {
-  return getTradesForMonth(month)
-    .reduce((sum, t) => {
-      const net = getTradeNetPnl(t);
-      return net !== null && net < 0 ? sum + Math.abs(net) : sum;
-    }, 0);
+  return getMonthStopBudgetUsed(month);
 }
 function computeFields() {
   const s=getSettings(), total=s.total;
@@ -946,18 +1044,36 @@ function openEditModal(id) {
   const pnlNet=getTradeNetPnl(t);
   const targetPct = getTradeTargetPct(t);
   const targetPrice = getTradeTargetPrice(t);
+  const recommendedShares = getRecommendedShares(getSettings().total * (getSettings().singleStop / 100), parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss));
   document.getElementById('modalBody').innerHTML=`
     <div class="computed-card" style="margin-bottom:20px">
       <div class="computed-item"><span class="computed-label">占用止损</span><span class="computed-val">${t.used_stop!=null?'$'+parseFloat(t.used_stop).toFixed(2):'—'}</span></div>
-      <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val">${t.day_high&&t.day_low?((t.day_high-t.buy_price)/(t.day_high-t.day_low)*100).toFixed(0)+'%':'—'}</span></div>
+      <div class="computed-item"><span class="computed-label">建议买入股数</span><span class="computed-val" id="m_recommendedShares">${recommendedShares!==null?`${recommendedShares.toLocaleString()} 股`:'—'}</span></div>
+      <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val" id="m_buyRating">${t.day_high&&t.day_low?((t.day_high-t.buy_price)/(t.day_high-t.day_low)*100).toFixed(0)+'%':'—'}</span></div>
       <div class="computed-item"><span class="computed-label">目标价</span><span class="computed-val">${targetPrice!==null?'$'+targetPrice.toFixed(3):'—'}</span></div>
-      <div class="computed-item"><span class="computed-label">盈亏</span><span class="computed-val ${pnlNet===null?'':pnlNet>=0?'':'danger'}">${pnlNet===null?'持仓中':'$'+parseFloat(pnlNet).toFixed(2)}</span></div>
+      <div class="computed-item"><span class="computed-label">盈亏</span><span class="computed-val ${pnlNet===null?'':pnlNet>=0?'':'danger'}" id="m_livePnl">${pnlNet===null?'持仓中':'$'+parseFloat(pnlNet).toFixed(2)}</span></div>
     </div>
+    <div class="form-title" style="margin-bottom:16px">买入信息</div>
     <div class="form-grid">
-      <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="m_targetPct" value="${targetPct ?? ''}" step="0.1" oninput="updateModalTargetPrice()"></div>
+      <div class="form-group"><label>股票代码</label><input type="text" id="m_stock" value="${t.stock||''}" style="text-transform:uppercase"></div>
+      <div class="form-group"><label>买入价</label><input type="number" id="m_buyPrice" value="${t.buy_price||''}" step="0.001" oninput="updateModalComputedFields()"></div>
+      <div class="form-group"><label>止损价</label><input type="number" id="m_stopLoss" value="${t.stop_loss||''}" step="0.001" oninput="updateModalComputedFields()"></div>
+      <div class="form-group"><label>股数</label><input type="number" id="m_shares" value="${t.shares||''}" oninput="updateModalComputedFields()"></div>
+      <div class="form-group"><label>买入日期</label><input type="date" id="m_buyDate" value="${t.buy_date||''}"></div>
+      <div class="form-group"><label>买入日最高价</label><input type="number" id="m_dayHigh" value="${t.day_high||''}" step="0.001" oninput="updateModalComputedFields()"></div>
+      <div class="form-group"><label>买入日最低价</label><input type="number" id="m_dayLow" value="${t.day_low||''}" step="0.001" oninput="updateModalComputedFields()"></div>
+      <div class="form-group"><label>止损理由</label><input type="text" id="m_stopReason" value="${t.stop_reason||''}"></div>
+      <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="m_targetPct" value="${targetPct ?? ''}" step="0.1" oninput="updateModalComputedFields()"></div>
       <div class="form-group"><label>盈利目标价</label><input type="number" id="m_target" value="${targetPrice!==null?targetPrice.toFixed(3):''}" step="0.001" readonly></div>
+      <div class="form-group"><label>占用止损额度</label><input type="text" id="m_usedStop" value="${t.used_stop!=null?'$'+parseFloat(t.used_stop).toFixed(2):'—'}" readonly></div>
+    </div>
+    <div class="form-title" style="margin:24px 0 16px">后续补充</div>
+    <div class="form-grid">
       <div class="form-group"><label>通道高点</label><input type="number" id="m_chanHigh" value="${t.chan_high||''}" step="0.001"></div>
       <div class="form-group"><label>通道低点</label><input type="number" id="m_chanLow" value="${t.chan_low||''}" step="0.001"></div>
+    </div>
+    <div class="form-title" style="margin:24px 0 16px">卖出信息</div>
+    <div class="form-grid">
       <div class="form-group"><label>卖出价</label><input type="number" id="m_sell" value="${t.sell_price||''}" step="0.001"></div>
       <div class="form-group"><label>卖出日期</label><input type="date" id="m_sellDate" value="${t.sell_date||''}"></div>
       <div class="form-group"><label>卖出最高价</label><input type="number" id="m_sellHigh" value="${t.sell_high||''}" step="0.001"></div>
@@ -968,31 +1084,44 @@ function openEditModal(id) {
       <div class="form-group full"><label>操作复盘</label><textarea id="m_review">${t.review||''}</textarea></div>
     </div>
     <div class="btn-row"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="updateBtn" onclick="updateTrade()">保存更新</button></div>`;
-}
-
-function updateModalTargetPrice() {
-  const t=trades.find(x=>sameId(x.id, editingId)); if(!t) return;
-  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
-  const targetPrice = getTargetPrice(parseNumberValue(t.buy_price), targetPct);
-  const targetInput = document.getElementById('m_target');
-  if (targetInput) targetInput.value = targetPrice !== null ? targetPrice.toFixed(3) : '';
+  updateModalComputedFields();
 }
 
 async function updateTrade() {
   const t=trades.find(x=>sameId(x.id, editingId)); if(!t) return;
+  const stock=document.getElementById('m_stock').value.trim().toUpperCase();
+  const buyPrice=getNumberInputValue('m_buyPrice');
+  const stopLoss=getNumberInputValue('m_stopLoss');
+  const sharesRaw=getNumberInputValue('m_shares');
+  const shares=sharesRaw!==null?Math.floor(sharesRaw):null;
   const sp=getNumberInputValue('m_sell');
   const bcInput=getNumberInputValue('m_buyComm');
   const scInput=getNumberInputValue('m_sellComm');
   const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
-  const targetPrice = getTargetPrice(parseNumberValue(t.buy_price), targetPct);
+  const targetPrice = getTargetPrice(buyPrice, targetPct);
+  if(!stock||!buyPrice||!shares||!stopLoss){showAlert('tradeAlertZone','请填写完整的买入信息：股票代码、买入价、股数、止损价','danger');return;}
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  if (riskPerShare === null) { showAlert('tradeAlertZone','止损价必须低于买入价，才能保存更新','danger'); return; }
+  if (shares <= 0) { showAlert('tradeAlertZone','股数必须大于 0','danger'); return; }
   const bc=getCommissionValue(bcInput, getCommissionValue(t.buy_comm, 1));
   const sc=getCommissionValue(scInput, getCommissionValue(t.sell_comm, 0));
-  const pnl=calculateGrossPnl(parseNumberValue(t.buy_price), sp, parseNumberValue(t.shares));
+  const usedStop = riskPerShare * shares;
+  const pnl=calculateGrossPnl(buyPrice, sp, shares);
   const pnlNet=calculateNetPnl(pnl, bc, sc);
-  const u={sell_price:sp,sell_date:document.getElementById('m_sellDate').value||null,
+  const u={
+    stock,
+    buy_price:buyPrice,
+    stop_loss:stopLoss,
+    shares,
+    buy_date:document.getElementById('m_buyDate').value||null,
+    day_high:getNumberInputValue('m_dayHigh'),
+    day_low:getNumberInputValue('m_dayLow'),
+    stop_reason:document.getElementById('m_stopReason').value,
     target_price:targetPrice,target_pct:targetPct,
     chan_high:getNumberInputValue('m_chanHigh'),
     chan_low:getNumberInputValue('m_chanLow'),
+    used_stop:usedStop,
+    sell_price:sp,sell_date:document.getElementById('m_sellDate').value||null,
     sell_high:getNumberInputValue('m_sellHigh'),
     sell_low:getNumberInputValue('m_sellLow'),
     sell_reason:document.getElementById('m_sellReason').value,
@@ -1058,27 +1187,29 @@ function renderBanner() {
 }
 
 function renderStats() {
-  const s=getSettings(), monthTrades = getTradesForMonth(getCurrentReportMonth()), cl=monthTrades.filter(t=>getTradeNetPnl(t)!==null);
-  const wins=cl.filter(t=>getTradeNetPnl(t)>0), losses=cl.filter(t=>getTradeNetPnl(t)<0);
-  const tp=cl.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0);
-  const wr=cl.length?(wins.length/cl.length*100).toFixed(1):0;
+  const s=getSettings(), month=getCurrentReportMonth(), monthTrades = getTradesForMonth(month), closedTrades=getClosedTradesForMonth(month).filter(t=>getTradeNetPnl(t)!==null), openTrades=getOpenTradesForMonth(month);
+  const wins=closedTrades.filter(t=>getTradeNetPnl(t)>0), losses=closedTrades.filter(t=>getTradeNetPnl(t)<0);
+  const tp=closedTrades.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0);
+  const wr=closedTrades.length?(wins.length/closedTrades.length*100).toFixed(1):0;
   const aw=wins.length?wins.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/wins.length:0;
   const al=losses.length?losses.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/losses.length:0;
   const rr=aw&&al?Math.abs(aw/al).toFixed(2):'—';
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-val ${tp>=0?'pnl-pos':'pnl-neg'}">$${tp.toFixed(2)}</div><div class="stat-label">总盈亏</div></div>
-    <div class="stat-card"><div class="stat-val">${cl.length}</div><div class="stat-label">已结交易</div></div>
+    <div class="stat-card"><div class="stat-val">${closedTrades.length}</div><div class="stat-label">已结交易</div></div>
     <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${wr}%</div><div class="stat-label">胜率</div></div>
     <div class="stat-card"><div class="stat-val pnl-pos">$${aw.toFixed(2)}</div><div class="stat-label">平均盈利</div></div>
     <div class="stat-card"><div class="stat-val pnl-neg">$${al.toFixed(2)}</div><div class="stat-label">平均亏损</div></div>
     <div class="stat-card"><div class="stat-val">${rr}</div><div class="stat-label">盈亏比 R:R</div></div>
-    <div class="stat-card"><div class="stat-val">${monthTrades.filter(t=>!t.sell_price).length}</div><div class="stat-label">持仓中</div></div>
-    <div class="stat-card"><div class="stat-val">${monthTrades.length}</div><div class="stat-label">本月交易数</div></div>`;
-  const used=getMonthLosses(s.month), l6=s.total*(s.monthStop/100);
+    <div class="stat-card"><div class="stat-val">${openTrades.length}</div><div class="stat-label">月末持仓数</div></div>
+    <div class="stat-card"><div class="stat-val">${monthTrades.length}</div><div class="stat-label">当月相关交易</div></div>`;
+  const realizedLoss=getMonthRealizedLosses(s.month), openRisk=getMonthOpenRisk(s.month), used=getMonthStopBudgetUsed(s.month), l6=s.total*(s.monthStop/100);
   document.getElementById('monthlyReport').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">
       <div><div class="computed-label">统计月份</div><div class="computed-val">${s.month}</div></div>
-      <div><div class="computed-label">月度已亏损</div><div class="computed-val danger">$${used.toFixed(2)}</div></div>
+      <div><div class="computed-label">本月已实现亏损</div><div class="computed-val danger">$${realizedLoss.toFixed(2)}</div></div>
+      <div><div class="computed-label">月末持仓止损占用</div><div class="computed-val">$${openRisk.toFixed(2)}</div></div>
+      <div><div class="computed-label">月度止损已用</div><div class="computed-val ${used>l6?'danger':''}">$${used.toFixed(2)}</div></div>
       <div><div class="computed-label">单笔上限 (${s.singleStop}%)</div><div class="computed-val">$${(s.total*s.singleStop/100).toFixed(2)}</div></div>
       <div><div class="computed-label">月度上限 (${s.monthStop}%)</div><div class="computed-val">$${l6.toFixed(2)}</div></div>
       <div><div class="computed-label">剩余额度</div><div class="computed-val ${Math.max(0,l6-used)<=0?'danger':''}">$${Math.max(0,l6-used).toFixed(2)}</div></div>
