@@ -186,6 +186,7 @@
     grid-template-columns: 1fr;
     gap: 18px;
   }
+  .hero.hidden { display: none; }
   .hero-card, .panel-shell, .info-card, .summary-card, .trade-card, .stats-card, .capture-card, .table-card {
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
@@ -321,25 +322,25 @@
   }
   .panel-shell {
     display: none;
-    padding: 16px;
-    gap: 14px;
+    padding: 12px;
+    gap: 10px;
   }
   .panel-shell.active { display: grid; }
   .section-head {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
   }
   .section-head h2 {
-    font-size: 26px;
+    font-size: 20px;
     line-height: 1.12;
   }
   .section-head p {
     color: var(--muted);
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 12px;
+    line-height: 1.45;
     max-width: 68ch;
   }
   .toolbar {
@@ -358,7 +359,7 @@
     gap: 12px;
   }
   .info-card, .trade-card, .stats-card, .capture-card, .table-card {
-    padding: 16px;
+    padding: 12px;
   }
   .card-head {
     display: flex;
@@ -369,13 +370,13 @@
     flex-wrap: wrap;
   }
   .card-head h3 {
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1.2;
   }
   .card-head p {
     color: var(--muted);
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.4;
     max-width: 60ch;
   }
   .metric-grid {
@@ -430,36 +431,39 @@
   .m-card p { color: var(--muted); line-height: 1.7; font-size: 13px; }
   .trade-list {
     display: grid;
-    gap: 14px;
+    gap: 8px;
+  }
+  .compact-table-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
   }
   .compact-table {
     display: grid;
     gap: 0;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.02);
+    min-width: 1260px;
   }
   .compact-head, .compact-row {
     display: grid;
-    grid-template-columns: 1.15fr 0.58fr 0.9fr 0.72fr 0.98fr 0.56fr 0.78fr 0.84fr 1.05fr 0.8fr;
-    gap: 10px;
+    grid-template-columns: 180px 72px 102px 96px 102px 78px 96px 102px minmax(240px, 1fr) 92px;
+    gap: 8px;
     align-items: center;
   }
   .compact-head {
-    padding: 12px 16px;
+    padding: 8px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: rgba(255, 255, 255, 0.03);
   }
   .compact-head span {
     color: var(--muted);
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-family: "IBM Plex Mono", monospace;
   }
   .compact-row {
-    padding: 12px 16px;
+    padding: 7px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   .compact-row:last-child { border-bottom: none; }
@@ -467,11 +471,11 @@
   .compact-cell {
     min-width: 0;
     display: grid;
-    gap: 4px;
+    gap: 2px;
   }
   .compact-main {
-    font-size: 13px;
-    line-height: 1.35;
+    font-size: 12px;
+    line-height: 1.2;
     font-weight: 700;
     overflow-wrap: anywhere;
   }
@@ -479,25 +483,36 @@
   .compact-main.danger { color: var(--red); }
   .compact-sub {
     color: var(--muted);
-    font-size: 11px;
-    line-height: 1.45;
+    font-size: 10px;
+    line-height: 1.3;
     overflow-wrap: anywhere;
   }
   .compact-stock {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+  }
+  .compact-sticky-left,
+  .compact-sticky-right {
+    position: sticky;
+    z-index: 2;
+    background: rgba(13, 20, 21, 0.96);
+  }
+  .compact-sticky-left { left: 0; }
+  .compact-sticky-right {
+    right: 0;
+    justify-content: flex-end;
   }
   .compact-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
   }
   .compact-actions .btn {
-    padding: 9px 12px;
-    font-size: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
   }
   .trade-card {
     display: grid;
@@ -614,9 +629,10 @@
   .btn {
     border: 1px solid transparent;
     border-radius: 999px;
-    padding: 12px 18px;
+    padding: 9px 14px;
     transition: 0.2s ease;
     font-weight: 700;
+    font-size: 13px;
   }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn-primary {
@@ -650,44 +666,42 @@
   }
   .field, .input, .select, textarea {
     width: 100%;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.03);
     color: var(--text);
-    padding: 14px 16px;
+    padding: 10px 12px;
     outline: none;
     transition: border-color 0.2s ease, background 0.2s ease;
+    font-size: 14px;
   }
   .field:focus, .input:focus, .select:focus, textarea:focus {
     border-color: var(--border-strong);
     background: rgba(255, 255, 255, 0.045);
   }
-  textarea { resize: vertical; min-height: 124px; line-height: 1.7; }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
   .field-group {
     display: grid;
-    gap: 8px;
+    gap: 6px;
   }
   .field-group label {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-family: "IBM Plex Mono", monospace;
   }
   .capture-layout {
     display: grid;
-    grid-template-columns: 360px minmax(0, 1fr);
-    gap: 18px;
+    grid-template-columns: 1fr;
+    gap: 14px;
     align-items: start;
   }
   .capture-side {
-    position: sticky;
-    top: 24px;
-    display: grid;
-    gap: 18px;
+    position: static;
   }
   .calc-card {
-    padding: 22px;
+    padding: 12px 14px;
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     background:
@@ -699,43 +713,44 @@
     justify-content: space-between;
     gap: 10px;
     align-items: flex-start;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
   }
   .calc-mode {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 10px;
+    padding: 6px 8px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-family: "IBM Plex Mono", monospace;
   }
   .calc-grid {
     display: grid;
-    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
   }
   .calc-row {
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(0, 0, 0, 0.12);
-    padding: 14px 16px;
+    padding: 10px 12px;
   }
   .calc-row span {
     display: block;
     color: rgba(237, 245, 239, 0.65);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-family: "IBM Plex Mono", monospace;
   }
   .calc-row strong {
     display: block;
-    margin-top: 8px;
-    font-size: 19px;
+    margin-top: 6px;
+    font-size: 16px;
     line-height: 1.2;
   }
   .calc-row strong.safe { color: var(--green); }
@@ -743,11 +758,11 @@
   .calc-row strong.danger { color: var(--red); }
   .capture-main {
     display: grid;
-    gap: 18px;
+    gap: 12px;
   }
   .capture-card {
     display: grid;
-    gap: 18px;
+    gap: 12px;
   }
   .capture-card-header {
     display: flex;
@@ -756,18 +771,22 @@
     align-items: flex-start;
     flex-wrap: wrap;
   }
-  .capture-card-header h3 { font-size: 20px; }
-  .capture-card-header p {
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
-    max-width: 62ch;
+  .capture-card-header h3 {
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .capture-head-compact .eyebrow,
+  .capture-head-compact p {
+    display: none;
   }
   .form-grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 14px;
+    gap: 10px;
   }
+  .span-1 { grid-column: span 1; }
   .span-2 { grid-column: span 2; }
   .span-3 { grid-column: span 3; }
   .span-4 { grid-column: span 4; }
@@ -781,18 +800,22 @@
     align-items: stretch;
   }
   .field-inline .input { flex: 1; }
+  .field-stack {
+    display: grid;
+    gap: 6px;
+  }
   .template-row {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
   }
   .template-chip {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 999px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.025);
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11px;
   }
   .table-grid {
     display: grid;
@@ -825,11 +848,11 @@
   }
   .alert {
     border-radius: 18px;
-    padding: 14px 16px;
+    padding: 10px 12px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.03);
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 13px;
+    line-height: 1.5;
   }
   .alert.ok { color: var(--green); border-color: rgba(83, 209, 139, 0.24); background: rgba(83, 209, 139, 0.08); }
   .alert.warn { color: var(--yellow); border-color: rgba(255, 211, 109, 0.22); background: rgba(255, 211, 109, 0.08); }
@@ -883,13 +906,14 @@
       border-right: none;
       border-bottom: 1px solid var(--border);
     }
-    .hero, .overview-grid, .capture-layout, .settings-grid, .hero-main-grid { grid-template-columns: 1fr; }
+    .hero, .overview-grid, .settings-grid, .hero-main-grid, .calc-grid { grid-template-columns: 1fr; }
     .capture-side { position: static; }
   }
   @media (max-width: 900px) {
     .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .filter-bar { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .calc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .compact-head { display: none; }
     .compact-row {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -899,7 +923,7 @@
       grid-column: 1 / -1;
       justify-content: flex-start;
     }
-    .span-2, .span-3, .span-4, .span-5, .span-6, .span-8 { grid-column: span 1; }
+    .span-1, .span-2, .span-3, .span-4, .span-5, .span-6, .span-8 { grid-column: span 1; }
     .span-12 { grid-column: 1 / -1; }
     .trade-notes { grid-template-columns: 1fr; }
   }
@@ -908,6 +932,7 @@
     .sidebar { padding: 18px; }
     .hero-copy, .hero-actions, .panel-shell, .info-card, .trade-card, .stats-card, .capture-card, .table-card { padding: 18px; }
     .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid, .hero-grid { grid-template-columns: 1fr; }
+    .calc-grid { grid-template-columns: 1fr; }
     .compact-row { grid-template-columns: 1fr; }
   }
 </style>
@@ -979,7 +1004,7 @@
     </aside>
 
     <main class="workspace">
-      <section class="hero">
+      <section class="hero hidden" id="heroSection">
         <div class="hero-card hero-actions">
           <div class="hero-actions-top">
             <div>
@@ -1107,11 +1132,10 @@
       </section>
 
       <section id="panel-journal" class="panel-shell active">
-        <div class="section-head">
+        <div class="section-head capture-head-compact">
           <div>
-            <div class="eyebrow">Journal</div>
             <h2>交易日志与历史检索</h2>
-            <p>这里会按当前查看月份列出所有相关交易，包括以前月份建仓但在本月仍持有的仓位。你可以按状态和关键字继续筛选。</p>
+            <p>表格已按当前月份和筛选条件压缩展示。</p>
           </div>
           <div class="toolbar">
             <span class="month-chip mono" id="journalMonthCurrent">当前查看月份：—</span>
@@ -1138,11 +1162,10 @@
       </section>
 
       <section id="panel-capture" class="panel-shell">
-        <div class="section-head">
+        <div class="section-head capture-head-compact">
           <div>
-            <div class="eyebrow">Capture</div>
-            <h2 id="captureTitle">录入新的交易计划</h2>
-            <p id="captureSubtitle">先确认 entry、stop 和仓位，再补管理细节和复盘。这个页同时也是你的完整编辑页，已有交易点开后也会在这里修改。</p>
+            <h2 id="captureTitle">录入 / 编辑</h2>
+            <p id="captureSubtitle" style="display:none"></p>
           </div>
           <div class="btn-row">
             <button class="btn btn-secondary" id="captureCancelBtn" onclick="cancelEditing()" style="display:none">取消编辑</button>
@@ -1157,8 +1180,7 @@
             <div class="calc-card">
               <div class="calc-head">
                 <div>
-                  <div class="calc-mode" id="captureModePill">Create Mode</div>
-                  <div class="muted" style="margin-top:8px;font-size:13px;line-height:1.7">录入卡把仓位、风险和目标价始终钉在左侧，避免填写到一半忘记自己这笔单到底承担了多少风险。</div>
+                  <div class="calc-mode" id="captureModePill">Create</div>
                 </div>
               </div>
 
@@ -1179,62 +1201,49 @@
                 <div class="calc-row"><span>净利润预览</span><strong id="calcLivePnl">持仓中</strong></div>
               </div>
             </div>
-
-            <div class="info-card">
-              <div class="card-head">
-                <div>
-                  <h3>录入逻辑</h3>
-                  <p>1. 先定方向、入场价和止损价。2. 再根据最大可损失决定仓位。3. 目标价由目标盈利比例自动反推。4. 通道高低点和平仓信息可以后续再补。</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div class="capture-main">
             <div class="capture-card">
               <div class="capture-card-header">
-                <div>
-                  <h3>1. 交易计划与入场</h3>
-                  <p>Method 部分尽量写清楚交易是什么模式、为什么在这里进、止损放在哪里。</p>
-                </div>
+                <h3>1. 入场</h3>
               </div>
 
               <div class="form-grid">
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>股票代码 *</label>
                   <input class="input" type="text" id="f_stock" placeholder="NVDA" oninput="computeCapture()" style="text-transform:uppercase">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>方向 *</label>
                   <select class="select" id="f_direction" onchange="computeCapture()">
                     <option value="long">做多</option>
                     <option value="short">做空</option>
                   </select>
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>入场日期</label>
                   <input class="input mono" type="date" id="f_buyDate">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>入场价 *</label>
                   <input class="input" type="number" id="f_buyPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>止损价 *</label>
                   <input class="input" type="number" id="f_stopLoss" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>股数 *</label>
+                  <div class="field-stack">
+                    <input class="input" type="number" id="f_shares" placeholder="100" oninput="computeCapture()">
+                    <button class="btn btn-secondary" type="button" id="fillSharesInlineBtn" onclick="applyRecommendedShares()" disabled>使用建议值</button>
+                  </div>
                 </div>
 
                 <div class="field-group span-4">
                   <label>交易方法 / 止损依据</label>
                   <input class="input" type="text" id="f_stopReason" placeholder="Pullback to Value / 前低下方" oninput="refreshAll()">
-                </div>
-                <div class="field-group span-2">
-                  <label>入场日最高价</label>
-                  <input class="input" type="number" id="f_dayHigh" step="0.001" placeholder="0.000" oninput="computeCapture()">
-                </div>
-                <div class="field-group span-2">
-                  <label>入场日最低价</label>
-                  <input class="input" type="number" id="f_dayLow" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-2">
                   <label>目标盈利比例 (%)</label>
@@ -1244,55 +1253,52 @@
                   <label>盈利目标价</label>
                   <input class="input" type="number" id="f_targetPrice" step="0.001" placeholder="自动计算" readonly>
                 </div>
-
-                <div class="field-group span-4">
-                  <label>股数 *</label>
-                  <div class="field-inline">
-                    <input class="input" type="number" id="f_shares" placeholder="100" oninput="computeCapture()">
-                    <button class="btn btn-secondary" type="button" id="fillSharesInlineBtn" onclick="applyRecommendedShares()" disabled>使用建议值</button>
-                  </div>
-                </div>
-                <div class="field-group span-2">
-                  <label>通道高点</label>
-                  <input class="input" type="number" id="f_chanHigh" step="0.001" placeholder="后续补充">
-                </div>
-                <div class="field-group span-2">
-                  <label>通道低点</label>
-                  <input class="input" type="number" id="f_chanLow" step="0.001" placeholder="后续补充">
-                </div>
                 <div class="field-group span-2">
                   <label>开仓佣金 ($)</label>
                   <input class="input" type="number" id="f_buyComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
                 </div>
+                <div class="field-group span-1">
+                  <label>通道高点</label>
+                  <input class="input" type="number" id="f_chanHigh" step="0.001" placeholder="后补">
+                </div>
+                <div class="field-group span-1">
+                  <label>通道低点</label>
+                  <input class="input" type="number" id="f_chanLow" step="0.001" placeholder="后补">
+                </div>
                 <div class="field-group span-2">
-                  <label>平仓佣金 ($)</label>
-                  <input class="input" type="number" id="f_sellComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
+                  <label>入场日最高价</label>
+                  <input class="input" type="number" id="f_dayHigh" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>入场日最低价</label>
+                  <input class="input" type="number" id="f_dayLow" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
               </div>
             </div>
 
             <div class="capture-card">
               <div class="capture-card-header">
-                <div>
-                  <h3>2. 平仓与管理</h3>
-                  <p>平仓部分可以先留空。等交易结束后再把真实的离场价、平仓日高低点和退出原因补齐。</p>
-                </div>
+                <h3>2. 平仓</h3>
               </div>
 
               <div class="form-grid">
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>平仓日期</label>
                   <input class="input mono" type="date" id="f_sellDate" oninput="computeCapture()">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>平仓价</label>
                   <input class="input" type="number" id="f_sellPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
+                  <label>平仓佣金 ($)</label>
+                  <input class="input" type="number" id="f_sellComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
                   <label>平仓日最高价</label>
                   <input class="input" type="number" id="f_sellHigh" step="0.001" placeholder="0.000">
                 </div>
-                <div class="field-group span-3">
+                <div class="field-group span-2">
                   <label>平仓日最低价</label>
                   <input class="input" type="number" id="f_sellLow" step="0.001" placeholder="0.000">
                 </div>
@@ -1305,10 +1311,7 @@
 
             <div class="capture-card">
               <div class="capture-card-header">
-                <div>
-                  <h3>3. 复盘记录</h3>
-                  <p>Mind 部分用来沉淀交易过程中的执行感受和经验教训。你可以用下面的模板按钮快速插入结构化复盘框架。</p>
-                </div>
+                <h3>3. 复盘</h3>
                 <div class="template-row">
                   <button class="template-chip" type="button" onclick="insertReviewTemplate('plan')">插入计划模板</button>
                   <button class="template-chip" type="button" onclick="insertReviewTemplate('review')">插入复盘模板</button>
@@ -1459,7 +1462,7 @@ let trades = [];
 let settings = normalizeSettings(readStoredJson('tradeSettings', {}));
 let settingsTableReady = false;
 let settingsSaveTimer = null;
-let activePanel = 'overview';
+let activePanel = 'journal';
 let editingId = null;
 
 function safeStorageGet(key) {
@@ -1924,8 +1927,10 @@ function setPanel(panel) {
   document.querySelectorAll('.nav-btn').forEach((node) => node.classList.remove('active'));
   const panelEl = document.getElementById(`panel-${panel}`);
   const btn = document.querySelector(`.nav-btn[data-panel="${panel}"]`);
+  const hero = document.getElementById('heroSection');
   if (panelEl) panelEl.classList.add('active');
   if (btn) btn.classList.add('active');
+  if (hero) hero.classList.toggle('hidden', panel !== 'overview');
   if (panel === 'capture') computeCapture();
   if (panel === 'settings') loadSettingsUI();
 }
@@ -2059,17 +2064,17 @@ function resetCaptureModeText() {
   const title = document.getElementById('captureTitle');
   const subtitle = document.getElementById('captureSubtitle');
   const cancelBtn = document.getElementById('captureCancelBtn');
-  if (!modePill || !title || !subtitle || !cancelBtn) return;
+  if (!modePill || !title || !cancelBtn) return;
   if (editingTrade) {
-    modePill.textContent = `Edit Mode • ${editingTrade.stock || 'Trade'} • ${getDirectionLabel(editingTrade.direction)}`;
-    title.textContent = `正在编辑 ${editingTrade.stock || '这笔交易'} · ${getDirectionLabel(editingTrade.direction)}`;
-    subtitle.textContent = '这是一页完整编辑页，入场信息、通道高低点、平仓记录和复盘都可以随时回来修改。';
+    modePill.textContent = `Edit • ${editingTrade.stock || 'Trade'} • ${getDirectionLabel(editingTrade.direction)}`;
+    title.textContent = `编辑 ${editingTrade.stock || '交易'} · ${getDirectionLabel(editingTrade.direction)}`;
+    if (subtitle) subtitle.textContent = '';
     cancelBtn.style.display = 'inline-flex';
     document.getElementById('captureSaveBtn').textContent = '保存修改';
   } else {
-    modePill.textContent = 'Create Mode';
-    title.textContent = '录入新的交易计划';
-    subtitle.textContent = '先确认 entry、stop 和仓位，再补管理细节和复盘。这个页同时也是你的完整编辑页，已有交易点开后也会在这里修改。';
+    modePill.textContent = 'Create';
+    title.textContent = '录入 / 编辑';
+    if (subtitle) subtitle.textContent = '';
     cancelBtn.style.display = 'none';
     document.getElementById('captureSaveBtn').textContent = '保存交易';
   }
@@ -2630,20 +2635,21 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
   const rows = maxRows ? tradeList.slice(0, maxRows) : tradeList;
   if (!rows.length) return `<div class="empty-state">${emptyMessage}</div>`;
   return `
-    <div class="compact-table">
-      <div class="compact-head">
-        <span>标的</span>
-        <span>方向</span>
-        <span>入场</span>
-        <span>止损</span>
-        <span>平仓</span>
-        <span>股数</span>
-        <span>止损占用</span>
-        <span>净盈亏</span>
-        <span>计划 / 平仓原因</span>
-        <span>操作</span>
-      </div>
-      ${rows.map((trade) => {
+    <div class="compact-table-wrap">
+      <div class="compact-table">
+        <div class="compact-head">
+          <span class="compact-sticky-left">标的</span>
+          <span>方向</span>
+          <span>入场</span>
+          <span>止损</span>
+          <span>平仓</span>
+          <span>股数</span>
+          <span>止损占用</span>
+          <span>净盈亏</span>
+          <span>计划 / 平仓原因</span>
+          <span class="compact-sticky-right">操作</span>
+        </div>
+        ${rows.map((trade) => {
         const direction = normalizeDirection(trade.direction);
         const status = getTradeStatusMeta(trade);
         const targetPrice = getTradeTargetPrice(trade);
@@ -2658,7 +2664,7 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
             : formatCurrency(getTradeUsedStop(trade), 2);
         return `
           <div class="compact-row">
-            <div class="compact-cell">
+            <div class="compact-cell compact-sticky-left">
               <div class="compact-stock">
                 <span class="compact-main">${escapeHtml(trade.stock || '—')}</span>
                 <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
@@ -2693,13 +2699,14 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
               <div class="compact-main">${escapeHtml((trade.stop_reason || trade.sell_reason || '未填写').slice(0, 28))}</div>
               <div class="compact-sub">${escapeHtml(trade.sell_reason ? `平仓：${trade.sell_reason}` : (trade.stop_reason || '未写计划'))}</div>
             </div>
-            <div class="compact-actions">
+            <div class="compact-actions compact-sticky-right">
               <button class="btn btn-secondary" onclick="editTrade('${escapeHtml(trade.id)}')">编辑</button>
               ${includeDelete ? `<button class="btn btn-danger" onclick="deleteTrade('${escapeHtml(trade.id)}')">删</button>` : ''}
             </div>
           </div>
         `;
       }).join('')}
+      </div>
     </div>
   `;
 }
@@ -3024,6 +3031,7 @@ function initUI() {
   }
   clearCaptureForm();
   loadSettingsUI();
+  setPanel(activePanel);
   setSettingsSyncStatus('warn', `设置将同步到 Supabase 表 ${SETTINGS_TABLE}`);
 }
 
