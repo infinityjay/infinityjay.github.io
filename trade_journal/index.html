@@ -180,6 +180,8 @@
     display: grid;
     gap: 16px;
     min-width: 0;
+    align-content: start;
+    align-items: start;
   }
   .hero {
     display: grid;
@@ -324,6 +326,7 @@
     display: none;
     padding: 12px;
     gap: 10px;
+    align-content: start;
   }
   .panel-shell.active { display: grid; }
   .section-head {
@@ -1132,16 +1135,6 @@
       </section>
 
       <section id="panel-journal" class="panel-shell active">
-        <div class="section-head capture-head-compact">
-          <div>
-            <h2>交易日志与历史检索</h2>
-            <p>表格已按当前月份和筛选条件压缩展示。</p>
-          </div>
-          <div class="toolbar">
-            <span class="month-chip mono" id="journalMonthCurrent">当前查看月份：—</span>
-          </div>
-        </div>
-
         <div class="table-card">
           <div class="filter-bar">
             <input class="input mono" type="month" id="journalMonthPicker" onchange="setReportMonth(this.value)">
@@ -1154,7 +1147,10 @@
               <option value="planned">计划完整</option>
             </select>
             <input class="input" type="search" id="journalSearchInput" placeholder="搜索股票、方向、交易计划、平仓原因、复盘关键词…" oninput="refreshAll()">
-            <div class="month-chip mono" id="journalCountLabel">0 笔</div>
+            <div class="toolbar" style="justify-content:flex-end">
+              <span class="month-chip mono" id="journalMonthCurrent">当前查看月份：—</span>
+              <div class="month-chip mono" id="journalCountLabel">0 笔</div>
+            </div>
           </div>
         </div>
 
