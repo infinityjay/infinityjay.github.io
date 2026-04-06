@@ -3,336 +3,1319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>交易日志 · Trade Journal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230a0a0a'/%3E%3Cpath d='M14 42h9l6-13 7 7 7-16 7 22' fill='none' stroke='%23c8f53a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>Trading Journal Atlas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1111'/%3E%3Cpath d='M14 40c7-1 12-8 17-20l8 11 11-15' fill='none' stroke='%23c8ff61' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='16' r='5' fill='%23f6b257'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #0a0a0a; --surface: #111111; --surface2: #1a1a1a; --border: #2a2a2a;
-    --accent: #c8f53a; --accent3: #4d9fff; --text: #e8e8e8; --muted: #666;
-    --green: #4caf7d; --red: #ff5252; --yellow: #ffc947;
+    --bg: #091111;
+    --bg2: #10181a;
+    --panel: rgba(18, 26, 28, 0.9);
+    --panel-strong: rgba(23, 34, 36, 0.95);
+    --panel-soft: rgba(255, 255, 255, 0.04);
+    --border: rgba(211, 227, 220, 0.12);
+    --border-strong: rgba(200, 255, 97, 0.22);
+    --text: #edf5ef;
+    --muted: #8f9d97;
+    --accent: #c8ff61;
+    --accent-2: #7fd0d2;
+    --sun: #f6b257;
+    --green: #53d18b;
+    --red: #ff7b6d;
+    --yellow: #ffd36d;
+    --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:'Noto Sans SC',sans-serif; min-height:100vh; }
-  header { border-bottom:1px solid var(--border); padding:20px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--bg); z-index:100; }
-  .logo { display:flex; align-items:center; gap:12px; }
-  .logo-mark { width:32px; height:32px; border:2px solid var(--accent); transform:rotate(45deg); }
-  .logo-text { font-family:'Space Mono',monospace; font-size:14px; letter-spacing:0.1em; color:var(--accent); }
-  .header-right { display:flex; align-items:center; gap:16px; }
-  .db-status { display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
-  .db-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); }
-  .db-dot.connected { background:var(--green); box-shadow:0 0 6px var(--green); }
-  .db-dot.error { background:var(--red); }
-  .fund-banner { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; gap:48px; align-items:center; flex-wrap:wrap; }
-  .fund-item { display:flex; flex-direction:column; gap:4px; }
-  .fund-label { font-size:11px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; font-family:'Space Mono',monospace; }
-  .fund-value { font-size:22px; font-family:'Space Mono',monospace; font-weight:700; }
-  .fund-value.accent { color:var(--accent); } .fund-value.danger { color:var(--red); } .fund-value.safe { color:var(--green); }
-  .fund-divider { width:1px; height:40px; background:var(--border); }
-  .risk-bar-wrap { background:var(--surface2); height:6px; border-radius:3px; overflow:hidden; margin-top:6px; width:120px; }
-  .risk-bar-fill { height:100%; border-radius:3px; transition:width .4s ease; }
-  .tabs { display:flex; border-bottom:1px solid var(--border); padding:0 32px; }
-  .tab { padding:14px 20px; font-size:13px; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted); transition:all .2s; font-family:'Space Mono',monospace; }
-  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-  .tab:hover { color:var(--text); }
-  .main { padding:32px; max-width:1600px; margin:0 auto; }
-  .panel { display:none; } .panel.active { display:block; }
-  .form-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:32px; margin-bottom:24px; }
-  .form-title { font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.15em; color:var(--accent); margin-bottom:24px; text-transform:uppercase; }
-  .form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-  .form-group { display:flex; flex-direction:column; gap:6px; }
-  .form-group.full { grid-column:1/-1; } .form-group.half { grid-column:span 2; }
-  .inline-action { display:flex; gap:8px; align-items:stretch; }
-  .inline-action input { flex:1; }
-  .inline-action .btn { padding:10px 14px; white-space:nowrap; }
-  label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'Space Mono',monospace; }
-  input, select, textarea { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 12px; font-size:14px; font-family:'Noto Sans SC',sans-serif; border-radius:2px; outline:none; transition:border-color .2s; width:100%; }
-  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
-  textarea { resize:vertical; min-height:70px; }
-  .computed-card { background:linear-gradient(135deg,rgba(200,245,58,0.05) 0%,transparent 100%); border:1px solid rgba(200,245,58,0.2); border-radius:2px; padding:20px 24px; margin-bottom:24px; display:flex; gap:32px; flex-wrap:wrap; }
-  .computed-item { display:flex; flex-direction:column; gap:4px; }
-  .computed-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:'Space Mono',monospace; }
-  .computed-val { font-size:18px; font-family:'Space Mono',monospace; font-weight:700; color:var(--accent); }
-  .computed-val.safe { color:var(--green); }
-  .computed-val.warn { color:var(--yellow); } .computed-val.danger { color:var(--red); }
-  .btn { padding:10px 24px; border:none; cursor:pointer; font-size:13px; font-family:'Space Mono',monospace; letter-spacing:0.08em; transition:all .2s; border-radius:2px; }
-  .btn-primary { background:var(--accent); color:#0a0a0a; }
-  .btn-primary:hover { background:#d4f84a; transform:translateY(-1px); }
-  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-  .btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); }
-  .btn-danger:hover { background:var(--red); color:white; }
-  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
-  .btn-ghost:hover { border-color:var(--text); color:var(--text); }
-  .btn-row { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
-  .panel-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
-  .month-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-  .month-indicator { font-size:12px; color:var(--muted); font-family:'Space Mono',monospace; letter-spacing:0.04em; }
-  .month-picker { max-width:180px; }
-  .table-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  thead tr { border-bottom:2px solid var(--border); }
-  thead th { padding:10px 12px; text-align:left; font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; }
-  tbody tr { border-bottom:1px solid var(--border); transition:background .15s; cursor:pointer; }
-  tbody tr:hover { background:var(--surface); }
-  tbody td { padding:12px 12px; white-space:nowrap; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:2px; font-size:11px; font-family:'Space Mono',monospace; font-weight:700; }
-  .badge-open { background:rgba(77,159,255,0.15); color:var(--accent3); border:1px solid rgba(77,159,255,0.3); }
-  .badge-win  { background:rgba(76,175,125,0.15); color:var(--green);   border:1px solid rgba(76,175,125,0.3); }
-  .badge-loss { background:rgba(255,82,82,0.15);  color:var(--red);     border:1px solid rgba(255,82,82,0.3); }
-  .badge-partial { background:rgba(255,201,71,0.15); color:var(--yellow); border:1px solid rgba(255,201,71,0.3); }
-  .pnl-pos { color:var(--green); font-family:'Space Mono',monospace; }
-  .pnl-neg { color:var(--red);   font-family:'Space Mono',monospace; }
-  .mono { font-family:'Space Mono',monospace; }
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border:1px solid var(--border); border-radius:2px; width:90%; max-width:760px; max-height:90vh; overflow-y:auto; padding:32px; position:relative; }
-  .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; font-family:'Space Mono',monospace; }
-  .modal-close:hover { color:var(--text); }
-  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:32px; }
-  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:20px 24px; }
-  .stat-val { font-size:28px; font-family:'Space Mono',monospace; font-weight:700; margin-bottom:4px; }
-  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-family:'Space Mono',monospace; }
-  .alert { padding:12px 16px; border-radius:2px; font-size:13px; margin-bottom:16px; }
-  .alert-danger { background:rgba(255,82,82,0.1);  border:1px solid rgba(255,82,82,0.3);  color:var(--red); }
-  .alert-warn   { background:rgba(255,201,71,0.1); border:1px solid rgba(255,201,71,0.3); color:var(--yellow); }
-  .alert-ok     { background:rgba(76,175,125,0.1); border:1px solid rgba(76,175,125,0.3); color:var(--green); }
-  .settings-row { display:flex; align-items:center; gap:16px; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-  .settings-info { flex:1; }
-  .settings-title { font-size:14px; margin-bottom:2px; }
-  .settings-desc { font-size:12px; color:var(--muted); }
-  .empty { text-align:center; padding:80px 0; color:var(--muted); }
-  .empty-icon { font-size:48px; margin-bottom:16px; }
-  .empty-text { font-family:'Space Mono',monospace; font-size:13px; }
-  #bootScreen { padding:32px; }
-  .boot-screen { max-width:520px; margin:60px auto; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:40px; }
-  .boot-screen h2 { font-family:'Space Mono',monospace; font-size:16px; color:var(--accent); margin-bottom:8px; }
-  .boot-screen p { font-size:13px; color:var(--muted); line-height:1.7; }
-  /* Config gate */
-  #configGate { padding:32px; }
-  .config-gate { max-width:520px; margin:60px auto; background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:40px; }
-  .config-gate h2 { font-family:'Space Mono',monospace; font-size:16px; color:var(--accent); margin-bottom:8px; }
-  .config-gate p { font-size:13px; color:var(--muted); margin-bottom:28px; line-height:1.7; }
-  @media(max-width:768px) {
-    .fund-banner { gap:16px; padding:16px; }
-    .main { padding:16px; }
-    header { padding:16px; }
-    .tabs { padding:0 16px; overflow-x:auto; }
-    .form-grid { grid-template-columns:1fr 1fr; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { color-scheme: dark; }
+  body {
+    min-height: 100vh;
+    color: var(--text);
+    font-family: "Manrope", "Noto Sans SC", sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(127, 208, 210, 0.16), transparent 26%),
+      radial-gradient(circle at top right, rgba(246, 178, 87, 0.12), transparent 28%),
+      linear-gradient(180deg, #091111 0%, #0b1415 35%, #0d1517 100%);
+  }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  .gate-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+  }
+  .gate-card {
+    width: min(560px, 100%);
+    padding: 36px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background:
+      linear-gradient(135deg, rgba(200, 255, 97, 0.08), transparent 38%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+      var(--panel);
+    backdrop-filter: blur(18px);
+    box-shadow: var(--shadow);
+  }
+  .gate-card h1 {
+    font-size: 28px;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  .gate-card p {
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+  .gate-stack { display: grid; gap: 18px; margin-top: 24px; }
+  .app-shell {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 28px 22px;
+    border-right: 1px solid var(--border);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+      rgba(8, 13, 14, 0.9);
+    backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .brand {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(200, 255, 97, 0.11), rgba(127, 208, 210, 0.03));
+  }
+  .brand-mark {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(200, 255, 97, 0.2), rgba(127, 208, 210, 0.08));
+    border: 1px solid rgba(200, 255, 97, 0.24);
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 800;
+  }
+  .brand-tag {
+    color: var(--accent);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  .brand h2 {
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .brand p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .sidebar-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+  }
+  .db-chip, .month-chip, .note-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted);
+    font-size: 12px;
+    width: fit-content;
+  }
+  .db-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--muted);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.03);
+  }
+  .db-dot.connected { background: var(--green); box-shadow: 0 0 0 4px rgba(83, 209, 139, 0.1), 0 0 12px rgba(83, 209, 139, 0.3); }
+  .db-dot.error { background: var(--red); box-shadow: 0 0 0 4px rgba(255, 123, 109, 0.1); }
+  .nav-list { display: grid; gap: 8px; }
+  .nav-btn {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    padding: 14px 16px;
+    border-radius: 14px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: 0.2s ease;
+  }
+  .nav-btn:hover { color: var(--text); border-color: var(--border); background: rgba(255, 255, 255, 0.025); }
+  .nav-btn.active {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: linear-gradient(135deg, rgba(200, 255, 97, 0.14), rgba(127, 208, 210, 0.06));
+  }
+  .nav-btn span:last-child { color: var(--accent); font-size: 12px; }
+  .workspace {
+    padding: 28px;
+    display: grid;
+    gap: 22px;
+    min-width: 0;
+  }
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.9fr);
+    gap: 18px;
+  }
+  .hero-card, .panel-shell, .info-card, .summary-card, .trade-card, .stats-card, .capture-card, .table-card {
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+      var(--panel);
+    box-shadow: var(--shadow);
+  }
+  .hero-copy {
+    padding: 28px;
+    display: grid;
+    gap: 18px;
+    background:
+      radial-gradient(circle at right top, rgba(200, 255, 97, 0.18), transparent 32%),
+      radial-gradient(circle at left bottom, rgba(127, 208, 210, 0.14), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+      var(--panel);
+  }
+  .eyebrow {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 11px;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .hero-copy h1 {
+    font-size: clamp(28px, 3.4vw, 46px);
+    line-height: 1.04;
+    max-width: 14ch;
+  }
+  .hero-copy p {
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 70ch;
+  }
+  .hero-actions {
+    display: grid;
+    gap: 16px;
+    padding: 24px;
+  }
+  .hero-actions-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .hero-actions-top strong { font-size: 14px; }
+  .hero-actions-top span { color: var(--muted); font-size: 13px; }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .summary-card {
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+  .summary-label {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .summary-value {
+    margin-top: 8px;
+    font-size: 27px;
+    line-height: 1.1;
+    font-weight: 800;
+  }
+  .summary-value.safe { color: var(--green); }
+  .summary-value.warn { color: var(--yellow); }
+  .summary-value.danger { color: var(--red); }
+  .summary-sub {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .risk-track {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+  }
+  .risk-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--green), var(--accent));
+    transition: width 0.25s ease;
+  }
+  .panel-shell {
+    display: none;
+    padding: 24px;
+    gap: 20px;
+  }
+  .panel-shell.active { display: grid; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .section-head h2 {
+    font-size: 26px;
+    line-height: 1.12;
+  }
+  .section-head p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 68ch;
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+  }
+  .stack {
+    display: grid;
+    gap: 18px;
+  }
+  .info-card, .trade-card, .stats-card, .capture-card, .table-card {
+    padding: 20px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .card-head h3 {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+  .card-head p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    max-width: 60ch;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .mini-metric {
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .mini-metric .value {
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .mini-metric .label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .three-m-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .m-card {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    display: grid;
+    gap: 12px;
+  }
+  .m-pill {
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .m-card strong { font-size: 26px; line-height: 1.1; }
+  .m-card p { color: var(--muted); line-height: 1.7; font-size: 13px; }
+  .trade-list {
+    display: grid;
+    gap: 14px;
+  }
+  .trade-card {
+    display: grid;
+    gap: 16px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012)),
+      var(--panel);
+  }
+  .trade-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .trade-title {
+    display: grid;
+    gap: 6px;
+  }
+  .trade-stock {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .trade-stock strong { font-size: 22px; }
+  .trade-stock small {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .badge.open { color: var(--accent-2); background: rgba(127, 208, 210, 0.08); }
+  .badge.win { color: var(--green); background: rgba(83, 209, 139, 0.08); }
+  .badge.loss { color: var(--red); background: rgba(255, 123, 109, 0.08); }
+  .badge.partial { color: var(--yellow); background: rgba(255, 211, 109, 0.08); }
+  .trade-meta {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .meta-cell {
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.018);
+    padding: 12px;
+    min-width: 0;
+  }
+  .meta-cell span {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .meta-cell strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 16px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .trade-notes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .note-box {
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.018);
+  }
+  .note-box span {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+    margin-bottom: 8px;
+  }
+  .note-box p {
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 13px;
+    white-space: pre-wrap;
+  }
+  .trade-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .trade-pnl {
+    font-size: 24px;
+    font-weight: 800;
+  }
+  .trade-pnl.pos { color: var(--green); }
+  .trade-pnl.neg { color: var(--red); }
+  .trade-pnl.flat { color: var(--muted); }
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 12px 18px;
+    transition: 0.2s ease;
+    font-weight: 700;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #e1ff98);
+    color: #081011;
+    box-shadow: 0 10px 24px rgba(200, 255, 97, 0.18);
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); }
+  .btn-danger {
+    background: rgba(255, 123, 109, 0.06);
+    border-color: rgba(255, 123, 109, 0.24);
+    color: var(--red);
+  }
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .filter-bar {
+    display: grid;
+    grid-template-columns: minmax(160px, 180px) minmax(180px, 220px) minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .field, .input, .select, textarea {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .field:focus, .input:focus, .select:focus, textarea:focus {
+    border-color: var(--border-strong);
+    background: rgba(255, 255, 255, 0.045);
+  }
+  textarea { resize: vertical; min-height: 124px; line-height: 1.7; }
+  .field-group {
+    display: grid;
+    gap: 8px;
+  }
+  .field-group label {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .capture-layout {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .capture-side {
+    position: sticky;
+    top: 24px;
+    display: grid;
+    gap: 18px;
+  }
+  .calc-card {
+    padding: 22px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background:
+      linear-gradient(135deg, rgba(200, 255, 97, 0.14), rgba(127, 208, 210, 0.04)),
+      var(--panel-strong);
+  }
+  .calc-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .calc-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .calc-grid {
+    display: grid;
+    gap: 12px;
+  }
+  .calc-row {
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.12);
+    padding: 14px 16px;
+  }
+  .calc-row span {
+    display: block;
+    color: rgba(237, 245, 239, 0.65);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .calc-row strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 19px;
+    line-height: 1.2;
+  }
+  .calc-row strong.safe { color: var(--green); }
+  .calc-row strong.warn { color: var(--yellow); }
+  .calc-row strong.danger { color: var(--red); }
+  .capture-main {
+    display: grid;
+    gap: 18px;
+  }
+  .capture-card {
+    display: grid;
+    gap: 18px;
+  }
+  .capture-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .capture-card-header h3 { font-size: 20px; }
+  .capture-card-header p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    max-width: 62ch;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .span-2 { grid-column: span 2; }
+  .span-3 { grid-column: span 3; }
+  .span-4 { grid-column: span 4; }
+  .span-5 { grid-column: span 5; }
+  .span-6 { grid-column: span 6; }
+  .span-8 { grid-column: span 8; }
+  .span-12 { grid-column: 1 / -1; }
+  .field-inline {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .field-inline .input { flex: 1; }
+  .template-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .template-chip {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .table-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .stats-card strong {
+    display: block;
+    font-size: 30px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .stats-card span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .stats-card p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .alert {
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .alert.ok { color: var(--green); border-color: rgba(83, 209, 139, 0.24); background: rgba(83, 209, 139, 0.08); }
+  .alert.warn { color: var(--yellow); border-color: rgba(255, 211, 109, 0.22); background: rgba(255, 211, 109, 0.08); }
+  .alert.danger { color: var(--red); border-color: rgba(255, 123, 109, 0.24); background: rgba(255, 123, 109, 0.08); }
+  .muted { color: var(--muted); }
+  .empty-state {
+    border-radius: 18px;
+    border: 1px dashed var(--border);
+    padding: 34px 22px;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .settings-block {
+    padding: 22px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    display: grid;
+    gap: 16px;
+  }
+  .settings-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .settings-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .settings-copy strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+  .settings-copy p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  @media (max-width: 1220px) {
+    .app-shell { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero, .overview-grid, .capture-layout, .settings-grid { grid-template-columns: 1fr; }
+    .capture-side { position: static; }
+  }
+  @media (max-width: 900px) {
+    .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .filter-bar { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .span-2, .span-3, .span-4, .span-5, .span-6, .span-8 { grid-column: span 1; }
+    .span-12 { grid-column: 1 / -1; }
+    .trade-notes { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .workspace { padding: 18px; }
+    .sidebar { padding: 18px; }
+    .hero-copy, .hero-actions, .panel-shell, .info-card, .trade-card, .stats-card, .capture-card, .table-card { padding: 18px; }
+    .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid, .hero-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<div id="bootScreen">
-  <div class="boot-screen">
-    <h2>Trade Journal 正在启动</h2>
-    <p id="bootMessage">正在初始化页面并检查数据库连接…</p>
+<div id="bootScreen" class="gate-screen">
+  <div class="gate-card">
+    <div class="eyebrow">Journal Boot</div>
+    <h1>Trading Journal Atlas 正在启动</h1>
+    <p id="bootMessage">正在初始化页面并检查 Supabase 数据库连接…</p>
   </div>
 </div>
 
-<!-- CONFIG GATE -->
-<div id="configGate" style="display:none">
-  <div class="config-gate">
-    <h2>配置 Supabase 数据库</h2>
-    <p>首次使用需填入 Supabase 项目信息。密钥仅存储在你的浏览器本地，不会上传任何服务器。</p>
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div class="form-group">
+<div id="configGate" class="gate-screen" style="display:none">
+  <div class="gate-card">
+    <div class="eyebrow">Supabase Config</div>
+    <h1>先连接你的交易数据库</h1>
+    <p>这个页面会直接从你的 Supabase 读取和写入交易记录。项目 URL 和 Public Anon Key 只保存在当前浏览器里，不会再经过别的服务器。</p>
+    <div class="gate-stack">
+      <div class="field-group">
         <label>Project URL</label>
-        <input type="text" id="cfg_url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+        <input class="input" type="text" id="cfg_url" placeholder="https://xxxxxxxxxxxx.supabase.co">
       </div>
-      <div class="form-group">
+      <div class="field-group">
         <label>Anon Public Key</label>
-        <input type="text" id="cfg_key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        <input class="input" type="text" id="cfg_key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
       </div>
       <div id="cfgError"></div>
-      <button class="btn btn-primary" id="cfgBtn" onclick="saveConfig()">连接数据库</button>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="cfgBtn" onclick="saveConfig()">连接数据库</button>
+      </div>
     </div>
-    <p style="margin-top:20px;font-size:12px">在 Supabase → Project Settings → API 获取以上信息</p>
   </div>
 </div>
 
-<!-- MAIN APP -->
 <div id="mainApp" style="display:none">
-<header>
-  <div class="logo">
-    <div class="logo-mark"></div>
-    <span class="logo-text">TRADE JOURNAL</span>
-  </div>
-  <div class="header-right">
-    <div class="db-status">
-      <div class="db-dot" id="dbDot"></div>
-      <span id="dbLabel">连接中…</span>
-    </div>
-    <span id="dateDisplay" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)"></span>
-    <button class="btn btn-primary" onclick="switchTab('add')">+ 新交易</button>
-  </div>
-</header>
-
-<div class="fund-banner">
-  <div class="fund-item"><span class="fund-label">总资金</span><span class="fund-value accent" id="bannerTotal">$0</span></div>
-  <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label" id="banner2pctLabel">单笔止损 (2%)</span><span class="fund-value" id="banner2pct" style="color:var(--yellow)">$0</span></div>
-  <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label" id="banner6pctLabel">月度止损 (6%)</span><span class="fund-value" id="banner6pct" style="color:var(--red)">$0</span></div>
-  <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label">已用月度止损</span><span class="fund-value" id="bannerUsed">$0</span></div>
-  <div class="fund-divider"></div>
-  <div class="fund-item"><span class="fund-label">剩余额度</span><span class="fund-value safe" id="bannerRemain">$0</span></div>
-  <div class="fund-divider"></div>
-  <div class="fund-item">
-    <span class="fund-label">月度使用</span>
-    <div class="risk-bar-wrap"><div class="risk-bar-fill" id="riskBar" style="width:0%;background:var(--green)"></div></div>
-    <span id="riskPct" style="font-size:12px;font-family:'Space Mono',monospace;color:var(--muted);margin-top:3px">0%</span>
-  </div>
-</div>
-
-<div id="alertZone" style="padding:0 32px;margin-top:12px"></div>
-
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('trades')">交易记录</div>
-  <div class="tab" onclick="switchTab('add')">新建交易</div>
-  <div class="tab" onclick="switchTab('stats')">统计分析</div>
-  <div class="tab" onclick="switchTab('settings')">设置</div>
-</div>
-
-<div class="main">
-
-  <div id="panel-trades" class="panel active">
-    <div id="tradeAlertZone"></div>
-    <div class="panel-toolbar">
-      <div class="month-toolbar">
-        <span class="month-indicator" id="tradesMonthLabel">当前查看月份：—</span>
-        <input class="month-picker" type="month" id="tradesMonthPicker" onchange="setReportMonth(this.value)">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">∿</div>
+        <div class="brand-tag mono">Trading Journal</div>
+        <h2>Atlas</h2>
+        <p>把计划、风险、执行和复盘放在同一张交易地图里，方便你像查档案一样回看每一笔交易。</p>
       </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>#</th><th>股票</th><th>买入价</th><th>止损价</th><th>目标价</th>
-          <th>股数</th><th>买入评级</th><th>止损额度</th><th>卖出价</th>
-          <th>卖出评级</th><th>盈亏</th><th>状态</th><th>操作</th>
-        </tr></thead>
-        <tbody id="tradeBody"></tbody>
-      </table>
-      <div id="emptyState" class="empty">
-        <div class="empty-icon">📊</div>
-        <div class="empty-text">还没有交易记录<br>点击右上角「+ 新交易」开始</div>
-      </div>
-    </div>
-  </div>
 
-  <div id="panel-add" class="panel">
-    <div id="addAlert"></div>
-    <div class="computed-card">
-      <div class="computed-item"><span class="computed-label" id="cMaxLossLabel">最大可损 (2%)</span><span class="computed-val" id="cMaxLoss">—</span></div>
-      <div class="computed-item"><span class="computed-label">止损幅度</span><span class="computed-val" id="cStopPct">—</span></div>
-      <div class="computed-item"><span class="computed-label">建议买入股数</span><span class="computed-val" id="cMaxPos">—</span></div>
-      <div class="computed-item"><span class="computed-label">占用止损额度</span><span class="computed-val" id="cUsedStop">—</span></div>
-      <div class="computed-item"><span class="computed-label">目标价</span><span class="computed-val" id="cTargetPrice">—</span></div>
-      <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val" id="cBuyRating">—</span></div>
-    </div>
-    <div class="form-card">
-      <div class="form-title">买入信息</div>
-      <div class="form-grid">
-        <div class="form-group"><label>股票代码 *</label><input type="text" id="f_stock" placeholder="AMZN" oninput="computeFields()" style="text-transform:uppercase"></div>
-        <div class="form-group"><label>买入价 *</label><input type="number" id="f_buyPrice" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group"><label>止损价 *</label><input type="number" id="f_stopLoss" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group">
-          <label>股数 *</label>
-          <div class="inline-action">
-            <input type="number" id="f_shares" placeholder="100" oninput="computeFields()">
-            <button class="btn btn-ghost" id="fillSharesBtn" type="button" onclick="applyRecommendedShares()" disabled>使用建议值</button>
+      <div class="sidebar-card">
+        <div class="db-chip">
+          <div class="db-dot" id="dbDot"></div>
+          <span id="dbLabel">连接中…</span>
+        </div>
+        <div class="month-chip mono" id="sidebarMonthChip">当前月份：—</div>
+        <div class="note-chip mono" id="dateDisplay">—</div>
+      </div>
+
+      <div class="nav-list">
+        <button class="nav-btn active" data-panel="overview" onclick="setPanel('overview')"><span>总览回顾</span><span>01</span></button>
+        <button class="nav-btn" data-panel="journal" onclick="setPanel('journal')"><span>交易日志</span><span>02</span></button>
+        <button class="nav-btn" data-panel="capture" onclick="setPanel('capture')"><span>录入 / 编辑</span><span>03</span></button>
+        <button class="nav-btn" data-panel="stats" onclick="setPanel('stats')"><span>统计分析</span><span>04</span></button>
+        <button class="nav-btn" data-panel="settings" onclick="setPanel('settings')"><span>设置</span><span>05</span></button>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="startNewTrade()">+ 新建交易</button>
+          <button class="btn btn-secondary" onclick="exportData()">导出备份</button>
+        </div>
+        <p class="muted" style="font-size:13px;line-height:1.8">参考 Elder 公开资料里强调的 Method、Money、记录与复盘，把月度风险、交易计划、执行结果和经验沉淀集中在一个页面里。</p>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="hero">
+        <div class="hero-card hero-copy">
+          <div class="eyebrow">Method • Money • Review</div>
+          <h1>先写计划，再算仓位，最后持续回顾。</h1>
+          <p id="heroIntro">这个页面会把当前查看月份的持仓风险、已实现亏损、计划完整度和复盘覆盖率一起呈现，方便你每次打开就知道自己此刻处于什么状态。</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="startNewTrade()">开始记录一笔新交易</button>
+            <button class="btn btn-secondary" onclick="setPanel('journal')">查看历史日志</button>
           </div>
         </div>
-        <div class="form-group"><label>买入日期</label><input type="date" id="f_buyDate"></div>
-        <div class="form-group"><label>买入日最高价</label><input type="number" id="f_dayHigh" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group"><label>买入日最低价</label><input type="number" id="f_dayLow" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group"><label>止损理由</label><input type="text" id="f_stopReason" placeholder="前低次低点"></div>
-        <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="f_targetPct" placeholder="10" step="0.1" oninput="computeFields()"></div>
-        <div class="form-group"><label>盈利目标价</label><input type="number" id="f_target" placeholder="自动计算" step="0.001" readonly></div>
-      </div>
-    </div>
-    <div class="form-card">
-      <div class="form-title">卖出信息（可留空，后续填写）</div>
-      <div class="form-grid">
-        <div class="form-group"><label>卖出价</label><input type="number" id="f_sellPrice" placeholder="0.00" step="0.001" oninput="computeFields()"></div>
-        <div class="form-group"><label>卖出日期</label><input type="date" id="f_sellDate"></div>
-        <div class="form-group"><label>卖出日最高价</label><input type="number" id="f_sellHigh" placeholder="0.00" step="0.001"></div>
-        <div class="form-group"><label>卖出日最低价</label><input type="number" id="f_sellLow" placeholder="0.00" step="0.001"></div>
-        <div class="form-group full"><label>卖出理由</label><input type="text" id="f_sellReason" placeholder="触发止损 / 达到目标 / ..."></div>
-      </div>
-    </div>
-    <div class="form-card">
-      <div class="form-title">后续补充（可后续填写 / 编辑）</div>
-      <div class="form-grid">
-        <div class="form-group"><label>通道高点</label><input type="number" id="f_chanHigh" placeholder="0.00" step="0.001"></div>
-        <div class="form-group"><label>通道低点</label><input type="number" id="f_chanLow" placeholder="0.00" step="0.001"></div>
-      </div>
-    </div>
-    <div class="form-card">
-      <div class="form-title">佣金 & 复盘</div>
-      <div class="form-grid">
-        <div class="form-group"><label>买入佣金 ($)</label><input type="number" id="f_buyComm" placeholder="1.00" step="0.01" min="0"></div>
-        <div class="form-group"><label>卖出佣金 ($)</label><input type="number" id="f_sellComm" placeholder="1.00" step="0.01" min="0"></div>
-        <div class="form-group half"><label>操作复盘</label><textarea id="f_review" placeholder="记录本次交易的问题与经验..."></textarea></div>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="clearForm()">清空</button>
-      <button class="btn btn-primary" id="saveBtn" onclick="saveTrade()">保存交易</button>
-    </div>
-  </div>
 
-  <div id="panel-stats" class="panel">
-    <div class="panel-toolbar">
-      <div class="month-toolbar">
-        <span class="month-indicator" id="statsMonthLabel">当前查看月份：—</span>
-        <input class="month-picker" type="month" id="statsMonthPicker" onchange="setReportMonth(this.value)">
-      </div>
-    </div>
-    <div class="stats-grid" id="statsGrid"></div>
-    <div class="form-card">
-      <div class="form-title">月度止损规则状态</div>
-      <div id="monthlyReport"></div>
-    </div>
-  </div>
+        <div class="hero-card hero-actions">
+          <div class="hero-actions-top">
+            <div>
+              <strong id="heroMonthTitle">当前查看月份：—</strong>
+              <span id="heroMonthSubtitle">用于筛选交易日志、统计分析和月度风险预算。</span>
+            </div>
+            <input class="input mono" style="max-width:180px" type="month" id="heroMonthPicker" onchange="setReportMonth(this.value)">
+          </div>
 
-  <div id="panel-settings" class="panel">
-    <div class="form-card">
-      <div class="form-title">账户设置</div>
-      <div id="settingsSyncAlert"></div>
-      <div class="form-grid" style="max-width:400px">
-        <div class="form-group"><label>总资金 ($)</label><input type="number" id="s_total" placeholder="114000" oninput="saveSettings()"></div>
-        <div class="form-group"><label>单笔止损上限 (%)</label><input type="number" id="s_singleStop" value="2" step="0.1" oninput="saveSettings()"></div>
-        <div class="form-group"><label>月度止损上限 (%)</label><input type="number" id="s_monthStop" value="6" step="0.1" oninput="saveSettings()"></div>
-        <div class="form-group"><label>统计月份</label><input type="month" id="s_month" oninput="saveSettings()"></div>
-      </div>
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
-        <div class="settings-row">
-          <div class="settings-info"><div class="settings-title">重新配置数据库</div><div class="settings-desc">修改 Supabase URL 和 Key</div></div>
-          <button class="btn btn-ghost" onclick="resetConfig()">重置连接</button>
+          <div class="hero-grid">
+            <div class="summary-card">
+              <div class="summary-label">总资金</div>
+              <div class="summary-value" id="heroTotal">$0</div>
+              <div class="summary-sub" id="heroTotalSub">风险预算的基准</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label" id="heroSingleStopLabel">单笔止损额度</div>
+              <div class="summary-value warn" id="heroSingleStop">$0</div>
+              <div class="summary-sub">由总资金和单笔止损比例自动计算</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label" id="heroMonthBudgetLabel">月度止损上限</div>
+              <div class="summary-value danger" id="heroMonthBudget">$0</div>
+              <div class="summary-sub">跨月持仓会继续占用这个预算</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">剩余额度</div>
+              <div class="summary-value safe" id="heroRemaining">$0</div>
+              <div class="summary-sub" id="heroRemainingSub">风险预算未使用</div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-label">月度止损使用率</div>
+            <div class="summary-value" id="heroUsedPct">0%</div>
+            <div class="summary-sub" id="heroUsedText">已实现亏损 + 月末仍持仓的止损占用</div>
+            <div class="risk-track" style="margin-top:14px"><div class="risk-fill" id="heroRiskFill"></div></div>
+          </div>
         </div>
-        <div class="settings-row">
-          <div class="settings-info"><div class="settings-title">导出备份</div><div class="settings-desc">将所有记录导出为 JSON 文件</div></div>
-          <button class="btn btn-ghost" onclick="exportData()">导出 JSON</button>
-        </div>
-        <div class="settings-row" style="border:none;margin:0;padding:0">
-          <div class="settings-info"><div class="settings-title" style="color:var(--red)">清除所有数据</div><div class="settings-desc">从数据库删除全部记录，不可恢复</div></div>
-          <button class="btn btn-danger" onclick="clearAll()">清除数据</button>
-        </div>
-      </div>
-    </div>
-  </div>
+      </section>
 
-</div>
-</div><!-- /mainApp -->
+      <div id="globalAlertZone"></div>
 
-<div class="modal-overlay" id="editModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="form-title" style="margin-bottom:20px">编辑交易</div>
-    <div id="modalBody"></div>
+      <section id="panel-overview" class="panel-shell active">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Overview</div>
+            <h2>当前月份的交易全貌</h2>
+            <p>总览页把当前月相关交易、跨月持仓、复盘覆盖率和最近的关键记录放在一起，更适合每天开盘前和周末回顾时快速扫一遍。</p>
+          </div>
+        </div>
+
+        <div class="overview-grid">
+          <div class="stack">
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>账户节奏</h3>
+                  <p>这里聚合当前月的已结交易、未结持仓和风险消耗，先看节奏，再决定要不要继续出手。</p>
+                </div>
+              </div>
+              <div class="metric-grid" id="overviewMetricGrid"></div>
+            </div>
+
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>Three Ms 仪表</h3>
+                  <p>参考 Elder 公开资料里反复强调的 Mind、Method、Money，把当月复盘习惯、计划完整度和风险纪律可视化。</p>
+                </div>
+              </div>
+              <div class="three-m-grid" id="threeMGrid"></div>
+            </div>
+
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>最近复盘摘录</h3>
+                  <p>把本月最近有复盘文字的交易放在这里，方便你持续回看自己到底在哪些地方重复犯错。</p>
+                </div>
+              </div>
+              <div class="trade-list" id="reviewExcerptList"></div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>月末仍持仓</h3>
+                  <p>这些仓位会随着月份滚动继续占用月度止损预算，避免只看“本月新开仓”而忽略旧持仓的风险。</p>
+                </div>
+                <button class="btn btn-secondary" onclick="setPanel('journal')">打开日志</button>
+              </div>
+              <div class="trade-list" id="overviewOpenList"></div>
+            </div>
+
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>最近已结交易</h3>
+                  <p>便于快速看最近一段时间是按计划出场，还是被市场教育。</p>
+                </div>
+              </div>
+              <div class="trade-list" id="overviewClosedList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-journal" class="panel-shell">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Journal</div>
+            <h2>交易日志与历史检索</h2>
+            <p>这里会按当前查看月份列出所有相关交易，包括以前月份建仓但在本月仍持有的仓位。你可以按状态和关键字继续筛选。</p>
+          </div>
+          <div class="toolbar">
+            <span class="month-chip mono" id="journalMonthCurrent">当前查看月份：—</span>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="filter-bar">
+            <input class="input mono" type="month" id="journalMonthPicker" onchange="setReportMonth(this.value)">
+            <select class="select" id="journalStatusFilter" onchange="refreshAll()">
+              <option value="all">全部状态</option>
+              <option value="open">持仓中</option>
+              <option value="closed">已结交易</option>
+              <option value="win">盈利</option>
+              <option value="loss">亏损</option>
+              <option value="planned">计划完整</option>
+            </select>
+            <input class="input" type="search" id="journalSearchInput" placeholder="搜索股票、交易计划、卖出原因、复盘关键词…" oninput="refreshAll()">
+            <div class="month-chip mono" id="journalCountLabel">0 笔</div>
+          </div>
+        </div>
+
+        <div class="trade-list" id="journalList"></div>
+      </section>
+
+      <section id="panel-capture" class="panel-shell">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Capture</div>
+            <h2 id="captureTitle">录入新的交易计划</h2>
+            <p id="captureSubtitle">先确认 entry、stop 和仓位，再补管理细节和复盘。这个页同时也是你的完整编辑页，已有交易点开后也会在这里修改。</p>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="captureCancelBtn" onclick="cancelEditing()" style="display:none">取消编辑</button>
+            <button class="btn btn-secondary" onclick="clearCaptureForm()">清空表单</button>
+          </div>
+        </div>
+
+        <div id="captureAlert"></div>
+
+        <div class="capture-layout">
+          <div class="capture-side">
+            <div class="calc-card">
+              <div class="calc-head">
+                <div>
+                  <div class="calc-mode" id="captureModePill">Create Mode</div>
+                  <div class="muted" style="margin-top:8px;font-size:13px;line-height:1.7">录入卡把仓位、风险和目标价始终钉在左侧，避免填写到一半忘记自己这笔单到底承担了多少风险。</div>
+                </div>
+              </div>
+
+              <div class="calc-grid">
+                <div class="calc-row"><span id="calcMaxLossLabel">最大可损</span><strong id="calcMaxLoss">—</strong></div>
+                <div class="calc-row"><span>止损状态</span><strong id="calcStopState">—</strong></div>
+                <div class="calc-row"><span>每股风险</span><strong id="calcRiskPerShare">—</strong></div>
+                <div class="calc-row">
+                  <span>建议买入股数</span>
+                  <strong id="calcRecommendedShares">—</strong>
+                  <div class="btn-row" style="margin-top:12px">
+                    <button class="btn btn-secondary" id="fillSharesBtn" type="button" onclick="applyRecommendedShares()" disabled>使用建议值</button>
+                  </div>
+                </div>
+                <div class="calc-row"><span>占用止损额度</span><strong id="calcUsedStop">—</strong></div>
+                <div class="calc-row"><span>目标价</span><strong id="calcTargetPrice">—</strong></div>
+                <div class="calc-row"><span>买入评级</span><strong id="calcBuyRating">—</strong></div>
+                <div class="calc-row"><span>净利润预览</span><strong id="calcLivePnl">持仓中</strong></div>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <div class="card-head">
+                <div>
+                  <h3>录入逻辑</h3>
+                  <p>1. 先定买入价和止损价。2. 再根据最大可损失决定仓位。3. 目标价由目标盈利比例自动反推。4. 通道高低点和卖出信息可以后续再补。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="capture-main">
+            <div class="capture-card">
+              <div class="capture-card-header">
+                <div>
+                  <h3>1. 交易计划与入场</h3>
+                  <p>Method 部分尽量写清楚交易是什么模式、为什么在这里进、止损放在哪里。</p>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="field-group span-3">
+                  <label>股票代码 *</label>
+                  <input class="input" type="text" id="f_stock" placeholder="NVDA" oninput="computeCapture()" style="text-transform:uppercase">
+                </div>
+                <div class="field-group span-3">
+                  <label>买入日期</label>
+                  <input class="input mono" type="date" id="f_buyDate">
+                </div>
+                <div class="field-group span-3">
+                  <label>买入价 *</label>
+                  <input class="input" type="number" id="f_buyPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-3">
+                  <label>止损价 *</label>
+                  <input class="input" type="number" id="f_stopLoss" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+
+                <div class="field-group span-4">
+                  <label>交易方法 / 止损依据</label>
+                  <input class="input" type="text" id="f_stopReason" placeholder="Pullback to Value / 前低下方" oninput="refreshAll()">
+                </div>
+                <div class="field-group span-2">
+                  <label>买入日最高价</label>
+                  <input class="input" type="number" id="f_dayHigh" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>买入日最低价</label>
+                  <input class="input" type="number" id="f_dayLow" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>目标盈利比例 (%)</label>
+                  <input class="input" type="number" id="f_targetPct" step="0.1" placeholder="10" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>盈利目标价</label>
+                  <input class="input" type="number" id="f_targetPrice" step="0.001" placeholder="自动计算" readonly>
+                </div>
+
+                <div class="field-group span-4">
+                  <label>股数 *</label>
+                  <div class="field-inline">
+                    <input class="input" type="number" id="f_shares" placeholder="100" oninput="computeCapture()">
+                    <button class="btn btn-secondary" type="button" id="fillSharesInlineBtn" onclick="applyRecommendedShares()" disabled>使用建议值</button>
+                  </div>
+                </div>
+                <div class="field-group span-2">
+                  <label>通道高点</label>
+                  <input class="input" type="number" id="f_chanHigh" step="0.001" placeholder="后续补充">
+                </div>
+                <div class="field-group span-2">
+                  <label>通道低点</label>
+                  <input class="input" type="number" id="f_chanLow" step="0.001" placeholder="后续补充">
+                </div>
+                <div class="field-group span-2">
+                  <label>买入佣金 ($)</label>
+                  <input class="input" type="number" id="f_buyComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-2">
+                  <label>卖出佣金 ($)</label>
+                  <input class="input" type="number" id="f_sellComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
+                </div>
+              </div>
+            </div>
+
+            <div class="capture-card">
+              <div class="capture-card-header">
+                <div>
+                  <h3>2. 卖出与管理</h3>
+                  <p>卖出部分可以先留空。等交易结束后再把真实的离场价、卖出日高低点和退出原因补齐。</p>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="field-group span-3">
+                  <label>卖出日期</label>
+                  <input class="input mono" type="date" id="f_sellDate" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-3">
+                  <label>卖出价</label>
+                  <input class="input" type="number" id="f_sellPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
+                </div>
+                <div class="field-group span-3">
+                  <label>卖出日最高价</label>
+                  <input class="input" type="number" id="f_sellHigh" step="0.001" placeholder="0.000">
+                </div>
+                <div class="field-group span-3">
+                  <label>卖出日最低价</label>
+                  <input class="input" type="number" id="f_sellLow" step="0.001" placeholder="0.000">
+                </div>
+                <div class="field-group span-12">
+                  <label>退出原因</label>
+                  <input class="input" type="text" id="f_sellReason" placeholder="触发止损 / 到达目标 / 提前减仓 / 趋势破坏">
+                </div>
+              </div>
+            </div>
+
+            <div class="capture-card">
+              <div class="capture-card-header">
+                <div>
+                  <h3>3. 复盘记录</h3>
+                  <p>Mind 部分用来沉淀交易过程中的执行感受和经验教训。你可以用下面的模板按钮快速插入结构化复盘框架。</p>
+                </div>
+                <div class="template-row">
+                  <button class="template-chip" type="button" onclick="insertReviewTemplate('plan')">插入计划模板</button>
+                  <button class="template-chip" type="button" onclick="insertReviewTemplate('review')">插入复盘模板</button>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label>交易笔记 / 复盘</label>
+                <textarea id="f_review" placeholder="写下这笔交易的计划、执行、情绪变化、错误和下次改进点…"></textarea>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn btn-secondary" onclick="clearCaptureForm()">重置表单</button>
+                <button class="btn btn-primary" id="captureSaveBtn" onclick="saveTrade()">保存交易</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-stats" class="panel-shell">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Stats</div>
+            <h2>月度统计分析</h2>
+            <p>统计页围绕当前查看月份重新汇总。已实现亏损只计算当月真正平仓且亏损的单子，未实现持仓风险则按月末还没结束的仓位继续占用预算。</p>
+          </div>
+          <div class="toolbar">
+            <input class="input mono" style="max-width:180px" type="month" id="statsMonthPicker" onchange="setReportMonth(this.value)">
+            <span class="month-chip mono" id="statsMonthCurrent">当前查看月份：—</span>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="overview-grid">
+          <div class="info-card">
+            <div class="card-head">
+              <div>
+                <h3>月度止损规则状态</h3>
+                <p>这里把月度预算拆成已实现亏损和月末持仓风险两部分，更接近真实的风险暴露。</p>
+              </div>
+            </div>
+            <div class="table-grid" id="monthlyRiskGrid"></div>
+          </div>
+
+          <div class="info-card">
+            <div class="card-head">
+              <div>
+                <h3>回顾提示</h3>
+                <p>如果一个月里“计划有写、复盘没写”或者“风险超预算”，这里会直接提醒你下个月最该修哪一块。</p>
+              </div>
+            </div>
+            <div id="statsNarrative"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-settings" class="panel-shell">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Settings</div>
+            <h2>账户设置与数据同步</h2>
+            <p>设置会优先同步到 Supabase 的 <span class="mono">trade_settings</span> 表；如果你还没建这张表，页面会先回退到浏览器缓存，不影响交易记录表使用。</p>
+          </div>
+        </div>
+
+        <div id="settingsSyncAlert"></div>
+
+        <div class="settings-grid">
+          <div class="settings-block">
+            <div class="card-head">
+              <div>
+                <h3>风险参数</h3>
+                <p>这些设置决定单笔最大可损、月度总止损和默认统计月份。</p>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>总资金 ($)</label>
+              <input class="input" type="number" id="s_total" placeholder="114000" oninput="saveSettings()">
+            </div>
+            <div class="field-group">
+              <label>单笔止损上限 (%)</label>
+              <input class="input" type="number" id="s_singleStop" step="0.1" oninput="saveSettings()">
+            </div>
+            <div class="field-group">
+              <label>月度止损上限 (%)</label>
+              <input class="input" type="number" id="s_monthStop" step="0.1" oninput="saveSettings()">
+            </div>
+            <div class="field-group">
+              <label>默认统计月份</label>
+              <input class="input mono" type="month" id="s_month" oninput="saveSettings()">
+            </div>
+          </div>
+
+          <div class="settings-block">
+            <div class="card-head">
+              <div>
+                <h3>数据操作</h3>
+                <p>导出、重新配置和清空数据都放在这里。</p>
+              </div>
+            </div>
+
+            <div class="settings-item">
+              <div class="settings-copy">
+                <strong>重新配置数据库</strong>
+                <p>修改 Supabase URL 和 Public Key。</p>
+              </div>
+              <button class="btn btn-secondary" onclick="resetConfig()">重置连接</button>
+            </div>
+
+            <div class="settings-item">
+              <div class="settings-copy">
+                <strong>导出 JSON 备份</strong>
+                <p>把当前表中的所有交易导出为本地文件。</p>
+              </div>
+              <button class="btn btn-secondary" onclick="exportData()">导出 JSON</button>
+            </div>
+
+            <div class="settings-item">
+              <div class="settings-copy">
+                <strong style="color:var(--red)">清除全部交易数据</strong>
+                <p>会删除 <span class="mono">trades</span> 表中的所有记录，无法恢复。</p>
+              </div>
+              <button class="btn btn-danger" onclick="clearAll()">清除数据</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 </div>
 
@@ -347,11 +1330,14 @@ const APP_CONFIG = {
 const DB_TABLE = (APP_CONFIG.tableName || 'trades').trim();
 const SETTINGS_TABLE = (APP_CONFIG.settingsTableName || 'trade_settings').trim();
 const SETTINGS_ROW_ID = 1;
-let sbClient = null, trades = [], editingId = null;
+const FIXED_NUMBER_LOCALE = 'en-US';
+let sbClient = null;
+let trades = [];
 let settings = normalizeSettings(readStoredJson('tradeSettings', {}));
 let settingsTableReady = false;
 let settingsSaveTimer = null;
-const FIXED_NUMBER_LOCALE = 'en-US';
+let activePanel = 'overview';
+let editingId = null;
 
 function safeStorageGet(key) {
   try { return localStorage.getItem(key); }
@@ -375,39 +1361,60 @@ function readStoredJson(key, fallback) {
   catch (_) { return fallback; }
 }
 
-function getInlineConfigValue(value) {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function getSupabaseConfig() {
-  const forceManual = safeStorageGet('sb_force_manual') === '1';
-  const storedUrl = (safeStorageGet('sb_url') || '').trim();
-  const storedKey = (safeStorageGet('sb_key') || '').trim();
-  if (forceManual) {
-    return { url: storedUrl, key: storedKey };
+function normalizeNumericText(value) {
+  const text = String(value ?? '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/，/g, ',')
+    .replace(/。/g, '.');
+  if (!text) return '';
+  const lastComma = text.lastIndexOf(',');
+  const lastDot = text.lastIndexOf('.');
+  if (lastComma !== -1 && lastDot !== -1) {
+    return lastComma > lastDot
+      ? text.replace(/\./g, '').replace(/,/g, '.')
+      : text.replace(/,/g, '');
   }
-  return {
-    url: getInlineConfigValue(APP_CONFIG.supabaseUrl) || storedUrl,
-    key: getInlineConfigValue(APP_CONFIG.supabaseAnonKey) || storedKey
-  };
+  if (lastComma !== -1) return text.replace(/,/g, '.');
+  return text;
 }
 
-function setView(view, bootMessage) {
-  const boot = document.getElementById('bootScreen');
-  const gate = document.getElementById('configGate');
-  const app = document.getElementById('mainApp');
-  if (bootMessage) document.getElementById('bootMessage').textContent = bootMessage;
-  boot.style.display = view === 'boot' ? 'block' : 'none';
-  gate.style.display = view === 'config' ? 'block' : 'none';
-  app.style.display = view === 'app' ? 'block' : 'none';
+function parseNumberValue(value) {
+  if (value === null || value === undefined) return null;
+  const text = normalizeNumericText(value);
+  if (text === '') return null;
+  const num = Number(text);
+  return Number.isFinite(num) ? num : null;
 }
 
-function prefillConfigInputs() {
-  const { url, key } = getSupabaseConfig();
-  const urlInput = document.getElementById('cfg_url');
-  const keyInput = document.getElementById('cfg_key');
-  if (urlInput) urlInput.value = url;
-  if (keyInput) keyInput.value = key;
+function formatNumber(value, decimals = 0) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '—';
+  return new Intl.NumberFormat(FIXED_NUMBER_LOCALE, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(num);
+}
+
+function formatCurrency(value, decimals = 2) {
+  const num = Number(value);
+  return Number.isFinite(num) ? `$${formatNumber(num, decimals)}` : '—';
+}
+
+function formatPercent(value, decimals = 1) {
+  const num = Number(value);
+  return Number.isFinite(num) ? `${formatNumber(num, decimals)}%` : '—';
+}
+
+function formatInputNumber(value, decimals = null) {
+  const num = parseNumberValue(value);
+  if (num === null) return '';
+  return decimals === null ? normalizeNumericText(num) : num.toFixed(decimals);
+}
+
+function formatShares(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? `${formatNumber(num, 0)} 股` : '—';
 }
 
 function escapeHtml(value) {
@@ -435,60 +1442,46 @@ function getLocalMonthStamp(date = new Date()) {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
 }
 
-function normalizeNumericText(value) {
-  const text = String(value ?? '')
-    .trim()
-    .replace(/\s+/g, '')
-    .replace(/，/g, ',')
-    .replace(/。/g, '.');
-  if (!text) return '';
-  const lastComma = text.lastIndexOf(',');
-  const lastDot = text.lastIndexOf('.');
-  if (lastComma !== -1 && lastDot !== -1) {
-    return lastComma > lastDot
-      ? text.replace(/\./g, '').replace(/,/g, '.')
-      : text.replace(/,/g, '');
-  }
-  if (lastComma !== -1) return text.replace(/,/g, '.');
-  return text;
+function getInlineConfigValue(value) {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-function formatNumber(value, decimals = 0) {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return '—';
-  return new Intl.NumberFormat(FIXED_NUMBER_LOCALE, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  }).format(num);
+function getSupabaseConfig() {
+  const forceManual = safeStorageGet('sb_force_manual') === '1';
+  const storedUrl = (safeStorageGet('sb_url') || '').trim();
+  const storedKey = (safeStorageGet('sb_key') || '').trim();
+  if (forceManual) return { url: storedUrl, key: storedKey };
+  return {
+    url: getInlineConfigValue(APP_CONFIG.supabaseUrl) || storedUrl,
+    key: getInlineConfigValue(APP_CONFIG.supabaseAnonKey) || storedKey
+  };
 }
 
-function formatCurrency(value, decimals = 2) {
-  const num = Number(value);
-  return Number.isFinite(num) ? `$${formatNumber(num, decimals)}` : '—';
+function setView(view, bootMessage) {
+  const boot = document.getElementById('bootScreen');
+  const gate = document.getElementById('configGate');
+  const app = document.getElementById('mainApp');
+  if (bootMessage) document.getElementById('bootMessage').textContent = bootMessage;
+  boot.style.display = view === 'boot' ? 'flex' : 'none';
+  gate.style.display = view === 'config' ? 'flex' : 'none';
+  app.style.display = view === 'app' ? 'block' : 'none';
 }
 
-function formatPercent(value, decimals = 2) {
-  const num = Number(value);
-  return Number.isFinite(num) ? `${formatNumber(num, decimals)}%` : '—';
+function prefillConfigInputs() {
+  const { url, key } = getSupabaseConfig();
+  const urlInput = document.getElementById('cfg_url');
+  const keyInput = document.getElementById('cfg_key');
+  if (urlInput) urlInput.value = url;
+  if (keyInput) keyInput.value = key;
 }
 
-function formatShares(value) {
-  const num = Number(value);
-  return Number.isFinite(num) ? `${formatNumber(num, 0)} 股` : '—';
-}
-
-function formatInputNumber(value, decimals = null) {
-  const num = parseNumberValue(value);
-  if (num === null) return '';
-  return decimals === null ? normalizeNumericText(value) : num.toFixed(decimals);
-}
-
-function parseNumberValue(value) {
-  if (value === null || value === undefined) return null;
-  const text = normalizeNumericText(value);
-  if (text === '') return null;
-  const num = Number(text);
-  return Number.isFinite(num) ? num : null;
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), ms);
+    })
+  ]);
 }
 
 function getNumberInputValue(id) {
@@ -496,56 +1489,40 @@ function getNumberInputValue(id) {
   return el ? parseNumberValue(el.value) : null;
 }
 
-function enhanceNumberInputs(root = document) {
-  root.querySelectorAll('input[type="number"]').forEach((input) => {
-    if (input.dataset.numberLocaleBound === '1') return;
-    input.lang = FIXED_NUMBER_LOCALE;
-    input.inputMode = input.step && input.step !== '1' ? 'decimal' : 'decimal';
-    const normalizeValue = () => {
-      const normalized = normalizeNumericText(input.value);
-      if (normalized && normalized !== input.value) input.value = normalized;
-    };
-    input.addEventListener('change', normalizeValue);
-    input.addEventListener('blur', normalizeValue);
-    input.dataset.numberLocaleBound = '1';
-  });
+function hasTextValue(value) {
+  return String(value ?? '').trim() !== '';
 }
 
 function parseTargetPctInput(value) {
   const pct = parseNumberValue(value);
-  if (pct === null) return null;
-  if (pct < 0) return null;
+  if (pct === null || pct < 0) return null;
   return pct;
 }
 
 function normalizeStoredTargetPctValue(value) {
   const pct = parseNumberValue(value);
-  if (pct === null) return null;
-  if (pct < 0) return null;
+  if (pct === null || pct < 0) return null;
   if (pct > 0 && pct < 1) return pct * 100;
   return pct;
 }
 
-function hasTextValue(value) {
-  return String(value ?? '').trim() !== '';
+function getTargetPrice(buyPrice, targetPct) {
+  if (buyPrice === null) return null;
+  const pct = parseTargetPctInput(targetPct);
+  if (pct === null) return null;
+  return buyPrice * (1 + pct / 100);
 }
 
-function hasCompleteSellInfo(sellPrice, sellDate) {
-  return sellPrice !== null && hasTextValue(sellDate);
-}
-
-function hasPartialSellInfo(sellPrice, sellDate) {
-  return (sellPrice !== null) !== hasTextValue(sellDate);
-}
-
-function isTradeClosed(t) {
-  return hasCompleteSellInfo(parseNumberValue(t.sell_price), t.sell_date);
+function getCommissionValue(value, fallback = 0) {
+  const parsed = parseNumberValue(value);
+  if (parsed === null) return fallback;
+  return Math.abs(parsed);
 }
 
 function getRiskPerShare(buyPrice, stopLoss) {
   if (buyPrice === null || stopLoss === null) return null;
-  const risk = buyPrice - stopLoss;
-  return risk > 0 ? risk : 0;
+  const diff = buyPrice - stopLoss;
+  return diff > 0 ? diff : 0;
 }
 
 function getStopStatus(buyPrice, stopLoss) {
@@ -563,40 +1540,16 @@ function getRecommendedShares(maxLoss, buyPrice, stopLoss) {
   return shares > 0 ? shares : 0;
 }
 
-function formatStopPctDisplay(buyPrice, stopLoss) {
-  const status = getStopStatus(buyPrice, stopLoss);
-  if (!status) return { text: '—', className: 'computed-val' };
-  if (status.type === 'breakeven') return { text: '已保本', className: 'computed-val safe' };
-  if (status.type === 'locked') return { text: `已锁盈 ${formatPercent(status.pct, 2)}`, className: 'computed-val safe' };
-  return { text: formatPercent(status.pct, 2), className: `computed-val${status.pct > 8 ? ' warn' : ''}` };
+function hasCompleteSellInfo(sellPrice, sellDate) {
+  return sellPrice !== null && hasTextValue(sellDate);
 }
 
-function formatUsedStopDisplay(usedStop, buyPrice, stopLoss, fallbackClassName = 'computed-val') {
-  const status = getStopStatus(buyPrice, stopLoss);
-  if (status?.type === 'breakeven') return { text: '无需占用（已保本）', className: `${fallbackClassName} safe` };
-  if (status?.type === 'locked') return { text: '无需占用（已锁盈）', className: `${fallbackClassName} safe` };
-  if (usedStop === null) return { text: '—', className: fallbackClassName };
-  return { text: formatCurrency(usedStop, 2), className: fallbackClassName };
+function hasPartialSellInfo(sellPrice, sellDate) {
+  return (sellPrice !== null) !== hasTextValue(sellDate);
 }
 
-function formatRecommendedSharesDisplay(recommendedShares, buyPrice, stopLoss, fallbackClassName = 'computed-val') {
-  const status = getStopStatus(buyPrice, stopLoss);
-  if (recommendedShares !== null) return { text: formatShares(recommendedShares), className: fallbackClassName };
-  if (status?.type === 'breakeven' || status?.type === 'locked') return { text: '无需建议', className: `${fallbackClassName} safe` };
-  return { text: '—', className: fallbackClassName };
-}
-
-function getTargetPrice(buyPrice, targetPct) {
-  if (buyPrice === null) return null;
-  const pct = parseTargetPctInput(targetPct);
-  if (pct === null) return null;
-  return buyPrice * (1 + pct / 100);
-}
-
-function getCommissionValue(value, fallback = 0) {
-  const parsed = parseNumberValue(value);
-  if (parsed === null) return fallback;
-  return Math.abs(parsed);
+function isTradeClosed(trade) {
+  return hasCompleteSellInfo(parseNumberValue(trade.sell_price), trade.sell_date);
 }
 
 function calculateGrossPnl(buyPrice, sellPrice, shares) {
@@ -609,123 +1562,81 @@ function calculateNetPnl(grossPnl, buyComm, sellComm) {
   return grossPnl - Math.abs(buyComm || 0) - Math.abs(sellComm || 0);
 }
 
-function getTradeTargetPct(t) {
-  return normalizeStoredTargetPctValue(t.target_pct);
-}
-
-function getTradeTargetPrice(t) {
-  const stored = parseNumberValue(t.target_price);
-  if (stored !== null) return stored;
-  return getTargetPrice(parseNumberValue(t.buy_price), getTradeTargetPct(t));
-}
-
-function getTradeNetPnl(t) {
-  if (!isTradeClosed(t)) return null;
-  const buyPrice = parseNumberValue(t.buy_price);
-  const sellPrice = parseNumberValue(t.sell_price);
-  const shares = parseNumberValue(t.shares);
+function getTradeNetPnl(trade) {
+  if (!isTradeClosed(trade)) return null;
+  const buyPrice = parseNumberValue(trade.buy_price);
+  const sellPrice = parseNumberValue(trade.sell_price);
+  const shares = parseNumberValue(trade.shares);
   const gross = calculateGrossPnl(buyPrice, sellPrice, shares);
-  const buyComm = getCommissionValue(t.buy_comm, 0);
-  const sellComm = getCommissionValue(t.sell_comm, 0);
-  return calculateNetPnl(gross, buyComm, sellComm);
+  return calculateNetPnl(gross, getCommissionValue(trade.buy_comm, 0), getCommissionValue(trade.sell_comm, 0));
 }
 
-function getSellFieldsError(sellPrice, sellDate) {
-  if (!hasPartialSellInfo(sellPrice, sellDate)) return '';
-  return sellPrice === null ? '填写卖出日期时，也请填写卖出价' : '填写卖出价时，也请填写卖出日期';
+function getTradeTargetPct(trade) {
+  return normalizeStoredTargetPctValue(trade.target_pct);
 }
 
-function setRecommendedSharesButton(recommendedShares, buyPrice = null, stopLoss = null) {
-  const btn = document.getElementById('fillSharesBtn');
-  if (!btn) return;
-  const status = getStopStatus(buyPrice, stopLoss);
-  const enabled = recommendedShares !== null && recommendedShares > 0;
-  btn.disabled = !enabled;
-  if (enabled) {
-    btn.textContent = `填入 ${formatNumber(recommendedShares, 0)} 股`;
-  } else if (status?.type === 'breakeven' || status?.type === 'locked') {
-    btn.textContent = '无需建议仓位';
-  } else {
-    btn.textContent = '使用建议值';
-  }
+function getTradeTargetPrice(trade) {
+  const stored = parseNumberValue(trade.target_price);
+  if (stored !== null) return stored;
+  return getTargetPrice(parseNumberValue(trade.buy_price), getTradeTargetPct(trade));
 }
 
-function applyRecommendedShares() {
-  const s = getSettings();
-  const buyPrice = getNumberInputValue('f_buyPrice');
-  const stopLoss = getNumberInputValue('f_stopLoss');
-  const maxLoss = s.total * (s.singleStop / 100);
-  const stopStatus = getStopStatus(buyPrice, stopLoss);
-  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
-  if (recommendedShares === null || recommendedShares <= 0) {
-    if (stopStatus?.type === 'breakeven' || stopStatus?.type === 'locked') {
-      showAlert('addAlert', '当前止损已处于保本/锁盈状态，无需推荐买入股数', 'warn');
-      return;
-    }
-    showAlert('addAlert', '请先填写有效的买入价、止损价和总资金，才能自动填入建议股数', 'warn');
-    return;
-  }
-  const sharesInput = document.getElementById('f_shares');
-  if (sharesInput) sharesInput.value = String(recommendedShares);
-  computeFields();
+function getTradeUsedStop(trade) {
+  const stored = parseNumberValue(trade.used_stop);
+  if (stored !== null) return Math.abs(stored);
+  const riskPerShare = getRiskPerShare(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss));
+  const shares = parseNumberValue(trade.shares);
+  if (riskPerShare === null || shares === null) return 0;
+  return Math.abs(riskPerShare * shares);
 }
 
-function updateModalComputedFields() {
-  const t = trades.find(x => sameId(x.id, editingId)); if (!t) return;
-  const s = getSettings();
-  const buyPrice = getNumberInputValue('m_buyPrice');
-  const stopLoss = getNumberInputValue('m_stopLoss');
-  const sharesRaw = getNumberInputValue('m_shares');
-  const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
-  const dayHigh = getNumberInputValue('m_dayHigh');
-  const dayLow = getNumberInputValue('m_dayLow');
-  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
-  const maxLoss = s.total * (s.singleStop / 100);
-  const targetPrice = getTargetPrice(buyPrice, targetPct);
-  const buyComm = getCommissionValue(getNumberInputValue('m_buyComm'), getCommissionValue(t.buy_comm, 1));
-  const sellComm = getCommissionValue(getNumberInputValue('m_sellComm'), getCommissionValue(t.sell_comm, 0));
-  const sellPrice = getNumberInputValue('m_sell');
-  const sellDate = document.getElementById('m_sellDate')?.value || '';
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
-  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
-  const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
-  const pnlNet = hasCompleteSellInfo(sellPrice, sellDate)
-    ? calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares), buyComm, sellComm)
-    : null;
+function getTradeBuyMonth(trade) {
+  return (trade.buy_date || trade.created_at || '').slice(0, 7);
+}
 
-  const targetInput = document.getElementById('m_target');
-  if (targetInput) targetInput.value = formatInputNumber(targetPrice, 3);
+function getTradeSellMonth(trade) {
+  return isTradeClosed(trade) ? (trade.sell_date || '').slice(0, 7) : '';
+}
 
-  const recommendedEl = document.getElementById('m_recommendedShares');
-  if (recommendedEl) {
-    const recommendedDisplay = formatRecommendedSharesDisplay(recommendedShares, buyPrice, stopLoss);
-    recommendedEl.textContent = recommendedDisplay.text;
-    recommendedEl.className = recommendedDisplay.className;
-  }
+function isTradeRelevantToMonth(trade, month) {
+  const buyMonth = getTradeBuyMonth(trade);
+  const sellMonth = getTradeSellMonth(trade);
+  if (!buyMonth) return false;
+  return buyMonth <= month && (!sellMonth || sellMonth >= month);
+}
 
-  const usedStopEl = document.getElementById('m_usedStop');
-  if (usedStopEl) {
-    const usedStopDisplay = formatUsedStopDisplay(usedStop, buyPrice, stopLoss, 'computed-val');
-    usedStopEl.value = usedStopDisplay.text;
-  }
+function isTradeOpenAtMonthEnd(trade, month) {
+  const buyMonth = getTradeBuyMonth(trade);
+  const sellMonth = getTradeSellMonth(trade);
+  if (!buyMonth) return false;
+  return buyMonth <= month && (!sellMonth || sellMonth > month);
+}
 
-  const pnlEl = document.getElementById('m_livePnl');
-  if (pnlEl) {
-    pnlEl.textContent = pnlNet !== null ? formatCurrency(pnlNet, 2) : '持仓中';
-    pnlEl.className = `computed-val${pnlNet === null ? '' : pnlNet >= 0 ? '' : ' danger'}`;
-  }
+function getTradesForMonth(month) {
+  return trades.filter((trade) => isTradeRelevantToMonth(trade, month));
+}
 
-  const ratingEl = document.getElementById('m_buyRating');
-  if (ratingEl) {
-    if (buyPrice !== null && dayHigh !== null && dayLow !== null && dayHigh !== dayLow) {
-      const rating = (dayHigh - buyPrice) / (dayHigh - dayLow) * 100;
-      ratingEl.textContent = formatPercent(rating, 0);
-      ratingEl.className = `computed-val${Math.round(rating) >= 50 ? '' : ' warn'}`;
-    } else {
-      ratingEl.textContent = '—';
-      ratingEl.className = 'computed-val';
-    }
-  }
+function getClosedTradesForMonth(month) {
+  return trades.filter((trade) => getTradeSellMonth(trade) === month);
+}
+
+function getOpenTradesForMonth(month) {
+  return trades.filter((trade) => isTradeOpenAtMonthEnd(trade, month));
+}
+
+function getMonthRealizedLosses(month) {
+  return getClosedTradesForMonth(month).reduce((sum, trade) => {
+    const pnl = getTradeNetPnl(trade);
+    return pnl !== null && pnl < 0 ? sum + Math.abs(pnl) : sum;
+  }, 0);
+}
+
+function getMonthOpenRisk(month) {
+  return getOpenTradesForMonth(month).reduce((sum, trade) => sum + getTradeUsedStop(trade), 0);
+}
+
+function getMonthStopBudgetUsed(month) {
+  return getMonthRealizedLosses(month) + getMonthOpenRisk(month);
 }
 
 function normalizeSettings(source = {}) {
@@ -761,146 +1672,178 @@ function settingsStateToRow() {
   };
 }
 
+function getSettings() {
+  return normalizeSettings(settings);
+}
+
+function getCurrentReportMonth() {
+  return getSettings().month;
+}
+
+function getSellFieldsError(sellPrice, sellDate) {
+  if (!hasPartialSellInfo(sellPrice, sellDate)) return '';
+  return sellPrice === null ? '填写卖出日期时，也请填写卖出价' : '填写卖出价时，也请填写卖出日期';
+}
+
+function getTradeStatusMeta(trade) {
+  const pnl = getTradeNetPnl(trade);
+  const sellPrice = parseNumberValue(trade.sell_price);
+  const sellDate = trade.sell_date || '';
+  if (hasPartialSellInfo(sellPrice, sellDate)) {
+    return { label: '待补卖出', className: 'partial' };
+  }
+  if (!isTradeClosed(trade)) {
+    return { label: '持仓中', className: 'open' };
+  }
+  if (pnl !== null && pnl >= 0) {
+    return { label: '盈利', className: 'win' };
+  }
+  return { label: '亏损', className: 'loss' };
+}
+
+function getBuyRating(buyPrice, dayHigh, dayLow) {
+  if (buyPrice === null || dayHigh === null || dayLow === null || dayHigh === dayLow) return null;
+  return (dayHigh - buyPrice) / (dayHigh - dayLow) * 100;
+}
+
+function getSellRating(sellPrice, sellHigh, sellLow) {
+  if (sellPrice === null || sellHigh === null || sellLow === null || sellHigh === sellLow) return null;
+  return (sellPrice - sellLow) / (sellHigh - sellLow) * 100;
+}
+
+function getJournalSearchText(trade) {
+  return [
+    trade.stock,
+    trade.stop_reason,
+    trade.sell_reason,
+    trade.review
+  ].join(' ').toLowerCase();
+}
+
+function getFilteredJournalTrades() {
+  const month = getCurrentReportMonth();
+  const status = document.getElementById('journalStatusFilter')?.value || 'all';
+  const query = (document.getElementById('journalSearchInput')?.value || '').trim().toLowerCase();
+  return getTradesForMonth(month).filter((trade) => {
+    if (query && !getJournalSearchText(trade).includes(query)) return false;
+    if (status === 'open') return !isTradeClosed(trade) && !hasPartialSellInfo(parseNumberValue(trade.sell_price), trade.sell_date);
+    if (status === 'closed') return isTradeClosed(trade);
+    if (status === 'win') return isTradeClosed(trade) && (getTradeNetPnl(trade) ?? -Infinity) >= 0;
+    if (status === 'loss') return isTradeClosed(trade) && (getTradeNetPnl(trade) ?? Infinity) < 0;
+    if (status === 'planned') return hasTextValue(trade.stop_reason) && getTradeTargetPct(trade) !== null;
+    return true;
+  });
+}
+
+function setDbStatus(ok) {
+  const dot = document.getElementById('dbDot');
+  const label = document.getElementById('dbLabel');
+  if (!dot || !label) return;
+  dot.className = `db-dot${ok ? ' connected' : ' error'}`;
+  label.textContent = ok ? 'Supabase 已连接' : '数据库连接失败';
+}
+
 function setSettingsSyncStatus(type, message) {
-  const el = document.getElementById('settingsSyncAlert');
-  if (!el) return;
+  const zone = document.getElementById('settingsSyncAlert');
+  if (!zone) return;
   if (!message) {
-    el.innerHTML = '';
+    zone.innerHTML = '';
     return;
   }
-  el.innerHTML = `<div class="alert alert-${type}">${escapeHtml(message)}</div>`;
+  zone.innerHTML = `<div class="alert ${escapeHtml(type)}">${escapeHtml(message)}</div>`;
 }
 
-function withTimeout(promise, ms, message) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(message)), ms);
-    })
-  ]);
+function showAlert(id, msg, type = 'warn') {
+  const zone = document.getElementById(id);
+  if (!zone) return;
+  const safeType = ['ok', 'warn', 'danger'].includes(type) ? type : 'warn';
+  zone.innerHTML = `<div class="alert ${safeType}">${escapeHtml(msg)}</div>`;
+  if (id === 'globalAlertZone') return;
+  setTimeout(() => {
+    if (zone.innerHTML.includes(escapeHtml(msg))) zone.innerHTML = '';
+  }, 4200);
 }
 
-// ── Config ──────────────────────────────────────────────────
-function saveConfig() {
-  const url = document.getElementById('cfg_url').value.trim();
-  const key = document.getElementById('cfg_key').value.trim();
-  if (!url || !key) { document.getElementById('cfgError').innerHTML='<div class="alert alert-danger">请填写 URL 和 Key</div>'; return; }
-  safeStorageSet('sb_force_manual', '1');
-  safeStorageSet('sb_url', url);
-  safeStorageSet('sb_key', key);
-  document.getElementById('cfgBtn').disabled = true;
-  document.getElementById('cfgBtn').textContent = '连接中…';
-  setView('boot', '正在验证 Supabase 配置…');
-  initSupabase();
-}
-function resetConfig() {
-  safeStorageSet('sb_force_manual', '1');
-  safeStorageRemove('sb_url');
-  safeStorageRemove('sb_key');
-  location.reload();
+function clearGlobalAlert() {
+  const zone = document.getElementById('globalAlertZone');
+  if (zone) zone.innerHTML = '';
 }
 
-async function initSupabase() {
-  const { url, key } = getSupabaseConfig();
-  prefillConfigInputs();
-  if (!url || !key) {
-    setView('config');
-    document.getElementById('cfgError').innerHTML = '';
-    return;
-  }
+function setPanel(panel) {
+  activePanel = panel;
+  document.querySelectorAll('.panel-shell').forEach((node) => node.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach((node) => node.classList.remove('active'));
+  const panelEl = document.getElementById(`panel-${panel}`);
+  const btn = document.querySelector(`.nav-btn[data-panel="${panel}"]`);
+  if (panelEl) panelEl.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (panel === 'capture') computeCapture();
+  if (panel === 'settings') loadSettingsUI();
+}
+
+function updateSidebarMonthChip() {
+  const chip = document.getElementById('sidebarMonthChip');
+  if (chip) chip.textContent = `当前月份：${getCurrentReportMonth()}`;
+}
+
+function syncMonthPickers() {
+  const month = getCurrentReportMonth();
+  ['heroMonthPicker', 'journalMonthPicker', 'statsMonthPicker', 's_month'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = month;
+  });
+  const labelText = `当前查看月份：${month}`;
+  ['heroMonthTitle', 'journalMonthCurrent', 'statsMonthCurrent'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = labelText;
+  });
+  updateSidebarMonthChip();
+}
+
+function setReportMonth(month) {
+  if (!month) return;
+  settings.month = month;
+  cacheSettings();
+  loadSettingsUI();
+  refreshAll();
+  setSettingsSyncStatus('warn', settingsTableReady ? '正在同步设置到 Supabase…' : '正在尝试保存设置到 Supabase…');
+  scheduleSettingsSave();
+}
+
+function updateRiskRuleLabels() {
+  const s = getSettings();
+  const singleStopLabel = document.getElementById('heroSingleStopLabel');
+  const monthBudgetLabel = document.getElementById('heroMonthBudgetLabel');
+  const calcMaxLossLabel = document.getElementById('calcMaxLossLabel');
+  if (singleStopLabel) singleStopLabel.textContent = `单笔止损额度 (${s.singleStop}%)`;
+  if (monthBudgetLabel) monthBudgetLabel.textContent = `月度止损上限 (${s.monthStop}%)`;
+  if (calcMaxLossLabel) calcMaxLossLabel.textContent = `最大可损 (${s.singleStop}%)`;
+}
+
+function scheduleSettingsSave() {
+  if (settingsSaveTimer) clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(() => { persistSettingsToDb(); }, 500);
+}
+
+async function persistSettingsToDb() {
+  if (!sbClient) return;
   try {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error('Supabase SDK 未加载，请检查网络或稍后重试');
-    }
-    setView('boot', '正在连接 Supabase…');
-    sbClient = window.supabase.createClient(url, key);
     const { error } = await withTimeout(
-      sbClient.from(DB_TABLE).select('id').limit(1),
+      sbClient.from(SETTINGS_TABLE).upsert(settingsStateToRow(), { onConflict: 'id' }),
       10000,
-      '数据库连接超时，请检查浏览器网络、插件拦截或稍后重试'
+      '保存设置超时'
     );
     if (error) throw error;
-    setDbStatus(true);
-    setView('app');
-    initUI();
-    loadSettingsFromDb().catch((err) => {
-      console.error(err);
-      setSettingsSyncStatus('warn', err.message || String(err));
-    });
-    loadTrades().catch((err) => {
-      console.error(err);
-      showAlert('tradeAlertZone', '读取交易记录失败：' + (err.message || err), 'danger');
-    });
-  } catch(e) {
-    setDbStatus(false);
-    setView('config');
-    document.getElementById('cfgError').innerHTML = `<div class="alert alert-danger">连接失败：${escapeHtml(e.message||e)}。请检查 URL、Key，以及 Supabase 中是否存在 <span class="mono">${escapeHtml(DB_TABLE)}</span> 表。</div>`;
-    const btn = document.getElementById('cfgBtn');
-    if (btn) { btn.disabled=false; btn.textContent='连接数据库'; }
+    settingsTableReady = true;
+    cacheSettings();
+    setSettingsSyncStatus('ok', '设置已保存到 Supabase');
+  } catch (_) {
+    settingsTableReady = false;
+    cacheSettings();
+    setSettingsSyncStatus('warn', `设置未写入 Supabase。请确认已创建 ${SETTINGS_TABLE} 表；当前先保存在浏览器。`);
   }
-}
-function setDbStatus(ok) {
-  const dot=document.getElementById('dbDot'), lbl=document.getElementById('dbLabel');
-  if(!dot) return;
-  dot.className = 'db-dot'+(ok?' connected':' error');
-  lbl.textContent = ok ? '已连接' : '连接失败';
 }
 
-// ── DB ops ───────────────────────────────────────────────────
-async function loadTrades() {
-  let result = await withTimeout(
-    sbClient.from(DB_TABLE).select('*').order('created_at', { ascending:false }),
-    10000,
-    '读取交易记录超时'
-  );
-  if (result.error) {
-    result = await withTimeout(
-      sbClient.from(DB_TABLE).select('*').order('buy_date', { ascending:false }),
-      10000,
-      '读取交易记录超时'
-    );
-  }
-  if (result.error) {
-    result = await withTimeout(
-      sbClient.from(DB_TABLE).select('*'),
-      10000,
-      '读取交易记录超时'
-    );
-  }
-  const { data, error } = result;
-  if (error) { console.error(error); showAlert('tradeAlertZone', '读取交易记录失败：' + error.message, 'danger'); return; }
-  trades = data || [];
-  refreshAll();
-}
-async function insertTrade(t) {
-  const { data, error } = await sbClient.from(DB_TABLE).insert([toRow(t)]).select().single();
-  if (error) throw error;
-  trades.unshift(data);
-}
-async function updateTradeInDb(id, u) {
-  const { error } = await sbClient.from(DB_TABLE).update(u).eq('id',id);
-  if (error) throw error;
-}
-async function deleteTradeInDb(id) {
-  const { error } = await sbClient.from(DB_TABLE).delete().eq('id',id);
-  if (error) throw error;
-}
-function toRow(t) {
-  return {
-    stock:t.stock, buy_price:t.buyPrice, shares:t.shares, stop_loss:t.stopLoss,
-    stop_reason:t.stopReason||null, buy_date:t.buyDate||null,
-    day_high:t.dayHigh ?? null, day_low:t.dayLow ?? null,
-    target_price:t.targetPrice ?? null, target_pct:t.targetPct ?? null,
-    chan_high:t.chanHigh ?? null, chan_low:t.chanLow ?? null,
-    sell_price:t.sellPrice ?? null, sell_date:t.sellDate||null,
-    sell_high:t.sellHigh ?? null, sell_low:t.sellLow ?? null,
-    sell_reason:t.sellReason||null, buy_comm:t.buyComm ?? 1,
-    sell_comm:t.sellComm ?? 0, review:t.review||null,
-    used_stop:t.usedStop ?? null, pnl:t.pnl ?? null, pnl_net:t.pnlNet ?? null
-  };
-}
-
-// ── Settings ─────────────────────────────────────────────────
 async function loadSettingsFromDb() {
   const { data, error } = await withTimeout(
     sbClient.from(SETTINGS_TABLE).select('*').eq('id', SETTINGS_ROW_ID).maybeSingle(),
@@ -919,538 +1862,874 @@ async function loadSettingsFromDb() {
     loadSettingsUI();
     refreshAll();
     setSettingsSyncStatus('ok', '设置已从 Supabase 同步');
-    return;
-  }
-  setSettingsSyncStatus('warn', `已连接 Supabase，但 ${SETTINGS_TABLE} 里还没有设置记录；首次修改时会自动保存。`);
-}
-
-function getSettings() {
-  return normalizeSettings(settings);
-}
-
-function getTradeMonth(t) {
-  return (isTradeClosed(t) ? t.sell_date : t.buy_date || '').slice(0, 7);
-}
-
-function getCurrentReportMonth() {
-  return getSettings().month;
-}
-
-function getTradeBuyMonth(t) {
-  return (t.buy_date || t.created_at || '').slice(0, 7);
-}
-
-function getTradeSellMonth(t) {
-  return isTradeClosed(t) ? (t.sell_date || '').slice(0, 7) : '';
-}
-
-function isTradeRelevantToMonth(t, month) {
-  const buyMonth = getTradeBuyMonth(t);
-  const sellMonth = getTradeSellMonth(t);
-  if (!buyMonth) return false;
-  return buyMonth <= month && (!sellMonth || sellMonth >= month);
-}
-
-function isTradeOpenAtMonthEnd(t, month) {
-  const buyMonth = getTradeBuyMonth(t);
-  const sellMonth = getTradeSellMonth(t);
-  if (!buyMonth) return false;
-  return buyMonth <= month && (!sellMonth || sellMonth > month);
-}
-
-function getTradeUsedStop(t) {
-  const stored = parseNumberValue(t.used_stop);
-  if (stored !== null) return Math.abs(stored);
-  const riskPerShare = getRiskPerShare(parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss));
-  const shares = parseNumberValue(t.shares);
-  if (riskPerShare === null || shares === null) return 0;
-  return Math.abs(riskPerShare * shares);
-}
-
-function getTradesForMonth(month) {
-  return trades.filter(t => isTradeRelevantToMonth(t, month));
-}
-
-function getClosedTradesForMonth(month) {
-  return trades.filter(t => getTradeSellMonth(t) === month);
-}
-
-function getOpenTradesForMonth(month) {
-  return trades.filter(t => isTradeOpenAtMonthEnd(t, month));
-}
-
-function getMonthRealizedLosses(month) {
-  return getClosedTradesForMonth(month).reduce((sum, t) => {
-    const net = getTradeNetPnl(t);
-    return net !== null && net < 0 ? sum + Math.abs(net) : sum;
-  }, 0);
-}
-
-function getMonthOpenRisk(month) {
-  return getOpenTradesForMonth(month).reduce((sum, t) => sum + getTradeUsedStop(t), 0);
-}
-
-function getMonthStopBudgetUsed(month) {
-  return getMonthRealizedLosses(month) + getMonthOpenRisk(month);
-}
-
-function syncMonthPickers() {
-  const month = getCurrentReportMonth();
-  const tradesPicker = document.getElementById('tradesMonthPicker');
-  const statsPicker = document.getElementById('statsMonthPicker');
-  const tradesLabel = document.getElementById('tradesMonthLabel');
-  const statsLabel = document.getElementById('statsMonthLabel');
-  if (tradesPicker) tradesPicker.value = month;
-  if (statsPicker) statsPicker.value = month;
-  if (tradesLabel) tradesLabel.textContent = `当前查看月份：${month}`;
-  if (statsLabel) statsLabel.textContent = `当前查看月份：${month}`;
-}
-
-function setReportMonth(month) {
-  if (!month) return;
-  settings.month = month;
-  cacheSettings();
-  loadSettingsUI();
-  refreshAll();
-  setSettingsSyncStatus('warn', settingsTableReady ? '正在同步设置到 Supabase…' : '正在尝试保存设置到 Supabase…');
-  scheduleSettingsSave();
-}
-
-function updateRiskRuleLabels() {
-  const s = getSettings();
-  const maxLossLabel = document.getElementById('cMaxLossLabel');
-  const singleStopLabel = document.getElementById('banner2pctLabel');
-  const monthStopLabel = document.getElementById('banner6pctLabel');
-  if (maxLossLabel) maxLossLabel.textContent = `最大可损 (${s.singleStop}%)`;
-  if (singleStopLabel) singleStopLabel.textContent = `单笔止损 (${s.singleStop}%)`;
-  if (monthStopLabel) monthStopLabel.textContent = `月度止损 (${s.monthStop}%)`;
-}
-
-function scheduleSettingsSave() {
-  if (settingsSaveTimer) clearTimeout(settingsSaveTimer);
-  settingsSaveTimer = setTimeout(() => {
-    persistSettingsToDb();
-  }, 500);
-}
-
-async function persistSettingsToDb() {
-  if (!sbClient) return;
-  try {
-    const { error } = await withTimeout(
-      sbClient.from(SETTINGS_TABLE).upsert(settingsStateToRow(), { onConflict: 'id' }),
-      10000,
-      '保存设置超时'
-    );
-    if (error) throw error;
-    settingsTableReady = true;
-    cacheSettings();
-    setSettingsSyncStatus('ok', '设置已保存到 Supabase');
-  } catch (error) {
-    settingsTableReady = false;
-    cacheSettings();
-    setSettingsSyncStatus('warn', `设置未写入 Supabase。请确认已创建 ${SETTINGS_TABLE} 表；当前先保存在浏览器。`);
+  } else {
+    setSettingsSyncStatus('warn', `已连接 Supabase，但 ${SETTINGS_TABLE} 里还没有设置记录；首次修改时会自动保存。`);
   }
 }
 
 function saveSettings() {
-  const totalValue = getNumberInputValue('s_total');
-  const singleStopValue = getNumberInputValue('s_singleStop');
-  const monthStopValue = getNumberInputValue('s_monthStop');
-  settings.total=totalValue ?? 0;
-  settings.singleStop=singleStopValue ?? 2;
-  settings.monthStop=monthStopValue ?? 6;
-  settings.month=document.getElementById('s_month').value||settings.month;
+  settings.total = getNumberInputValue('s_total') ?? 0;
+  settings.singleStop = getNumberInputValue('s_singleStop') ?? 2;
+  settings.monthStop = getNumberInputValue('s_monthStop') ?? 6;
+  settings.month = document.getElementById('s_month').value || settings.month;
   cacheSettings();
   refreshAll();
   setSettingsSyncStatus('warn', settingsTableReady ? '正在同步设置到 Supabase…' : '正在尝试保存设置到 Supabase…');
   scheduleSettingsSave();
 }
+
 function loadSettingsUI() {
-  const s=getSettings();
-  document.getElementById('s_total').value=s.total||'';
-  document.getElementById('s_singleStop').value=s.singleStop;
-  document.getElementById('s_monthStop').value=s.monthStop;
-  document.getElementById('s_month').value=s.month;
-  updateRiskRuleLabels();
+  const s = getSettings();
+  const total = document.getElementById('s_total');
+  const singleStop = document.getElementById('s_singleStop');
+  const monthStop = document.getElementById('s_monthStop');
+  if (total) total.value = s.total || '';
+  if (singleStop) singleStop.value = s.singleStop;
+  if (monthStop) monthStop.value = s.monthStop;
   syncMonthPickers();
+  updateRiskRuleLabels();
 }
 
-// ── Compute ───────────────────────────────────────────────────
-function getMonthLosses(month) {
-  return getMonthStopBudgetUsed(month);
-}
-function computeFields() {
-  const s=getSettings(), total=s.total;
-  const bp=getNumberInputValue('f_buyPrice');
-  const sl=getNumberInputValue('f_stopLoss');
-  const sh=getNumberInputValue('f_shares');
-  const dh=getNumberInputValue('f_dayHigh');
-  const dl=getNumberInputValue('f_dayLow');
-  const targetPct=parseTargetPctInput(getNumberInputValue('f_targetPct'));
-  const maxLoss=total*(s.singleStop/100);
-  document.getElementById('cMaxLoss').textContent=total?formatCurrency(maxLoss, 2):'—';
-  if(bp!==null && sl!==null && bp > 0){
-    const el=document.getElementById('cStopPct');
-    const stopPctDisplay = formatStopPctDisplay(bp, sl);
-    el.textContent=stopPctDisplay.text;
-    el.className=stopPctDisplay.className;
-    const recommendedShares = getRecommendedShares(maxLoss, bp, sl);
-    const maxSharesEl = document.getElementById('cMaxPos');
-    const recommendedDisplay = formatRecommendedSharesDisplay(recommendedShares, bp, sl);
-    maxSharesEl.textContent=recommendedDisplay.text;
-    maxSharesEl.className=recommendedDisplay.className;
-    setRecommendedSharesButton(recommendedShares, bp, sl);
-  } else {
-    document.getElementById('cStopPct').textContent='—';
-    document.getElementById('cStopPct').className='computed-val';
-    document.getElementById('cMaxPos').textContent='—';
-    document.getElementById('cMaxPos').className='computed-val';
-    setRecommendedSharesButton(null);
-  }
-  if(bp!==null && sl!==null && sh!==null){
-    const riskPerShare = getRiskPerShare(bp, sl);
-    const used = riskPerShare !== null ? riskPerShare * sh : null;
-    const el=document.getElementById('cUsedStop');
-    const usedStopDisplay = formatUsedStopDisplay(used, bp, sl, 'computed-val'+(total&&used>maxLoss?' danger':''));
-    el.textContent=usedStopDisplay.text;
-    el.className=usedStopDisplay.className;
-  } else {
-    document.getElementById('cUsedStop').textContent='—';
-    document.getElementById('cUsedStop').className='computed-val';
-  }
-  const targetPrice = getTargetPrice(bp, targetPct);
-  document.getElementById('f_target').value = formatInputNumber(targetPrice, 3);
-  const targetEl = document.getElementById('cTargetPrice');
-  if (targetPrice !== null) {
-    targetEl.textContent = formatCurrency(targetPrice, 3);
-    targetEl.className = 'computed-val';
-  } else {
-    targetEl.textContent = '—';
-    targetEl.className = 'computed-val';
-  }
-  if(bp!==null && dh!==null && dl!==null && dh !== dl){
-    const r=(dh-bp)/(dh-dl)*100;
-    const el=document.getElementById('cBuyRating');
-    el.textContent=formatPercent(r, 0);
-    el.className='computed-val'+(Math.round(r)>=50?'':' warn');
-  } else {
-    document.getElementById('cBuyRating').textContent='—';
-    document.getElementById('cBuyRating').className='computed-val';
-  }
-}
-
-// ── Trade CRUD ───────────────────────────────────────────────
-async function saveTrade() {
-  const stock=document.getElementById('f_stock').value.trim().toUpperCase();
-  const buyPrice=getNumberInputValue('f_buyPrice');
-  const sharesRaw=getNumberInputValue('f_shares');
-  const shares=sharesRaw!==null?Math.floor(sharesRaw):null;
-  const stopLoss=getNumberInputValue('f_stopLoss');
-  const targetPct=parseTargetPctInput(getNumberInputValue('f_targetPct'));
-  const targetPrice=getTargetPrice(buyPrice, targetPct);
-  if(!stock||!buyPrice||!shares||!stopLoss){showAlert('addAlert','请填写必填项：股票代码、买入价、股数、止损价','danger');return;}
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
-  if (shares <= 0) { showAlert('addAlert','股数必须大于 0','danger'); return; }
-  const s=getSettings(), maxLoss=s.total*(s.singleStop/100), usedStop=riskPerShare*shares;
-  if(s.total&&usedStop>maxLoss&&!confirm(`止损额度 ${formatCurrency(usedStop, 2)} 超过单笔${s.singleStop}%上限 ${formatCurrency(maxLoss, 2)}，确定继续？`)) return;
-  const sellPrice=getNumberInputValue('f_sellPrice');
-  const sellDate=document.getElementById('f_sellDate').value||null;
-  const sellFieldsError = getSellFieldsError(sellPrice, sellDate);
-  if (sellFieldsError) { showAlert('addAlert', sellFieldsError, 'danger'); return; }
-  const buyCommInput=getNumberInputValue('f_buyComm');
-  const sellCommInput=getNumberInputValue('f_sellComm');
-  const buyComm=getCommissionValue(buyCommInput, 1);
-  const isClosed = hasCompleteSellInfo(sellPrice, sellDate);
-  const sellComm=getCommissionValue(sellCommInput, isClosed ? 1 : 0);
-  const pnl=isClosed ? calculateGrossPnl(buyPrice, sellPrice, shares) : null;
-  const pnlNet=isClosed ? calculateNetPnl(pnl, buyComm, sellComm) : null;
-  const trade={stock,buyPrice,shares,stopLoss,usedStop,pnl,pnlNet,
-    stopReason:document.getElementById('f_stopReason').value,
-    buyDate:document.getElementById('f_buyDate').value||null,
-    dayHigh:getNumberInputValue('f_dayHigh'),
-    dayLow:getNumberInputValue('f_dayLow'),
-    targetPrice,
-    targetPct,
-    chanHigh:getNumberInputValue('f_chanHigh'),
-    chanLow:getNumberInputValue('f_chanLow'),
-    sellPrice,sellDate,
-    sellHigh:getNumberInputValue('f_sellHigh'),
-    sellLow:getNumberInputValue('f_sellLow'),
-    sellReason:document.getElementById('f_sellReason').value,
-    buyComm,sellComm,review:document.getElementById('f_review').value};
-  const btn=document.getElementById('saveBtn');
-  btn.disabled=true; btn.textContent='保存中…';
-  try {
-    await insertTrade(trade); clearForm(); switchTab('trades'); refreshAll();
-    showAlert('tradeAlertZone',`✓ ${stock} 已保存到数据库`,'ok');
-  } catch(e) { showAlert('addAlert','保存失败：'+e.message,'danger'); }
-  finally { btn.disabled=false; btn.textContent='保存交易'; }
-}
-
-async function deleteTrade(id) {
-  if(!confirm('确定删除这条记录？')) return;
-  try { await deleteTradeInDb(id); trades=trades.filter(t=>!sameId(t.id, id)); refreshAll(); }
-  catch(e) { showAlert('tradeAlertZone','删除失败：'+e.message,'danger'); }
-}
-
-function openEditModal(id) {
-  const t=trades.find(x=>sameId(x.id, id)); if(!t) return;
-  editingId=id;
-  document.getElementById('editModal').classList.add('open');
-  const pnlNet=getTradeNetPnl(t);
-  const targetPct = getTradeTargetPct(t);
-  const targetPrice = getTradeTargetPrice(t);
-  const recommendedShares = getRecommendedShares(getSettings().total * (getSettings().singleStop / 100), parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss));
-  const usedStopText = formatUsedStopDisplay(parseNumberValue(t.used_stop), parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss)).text;
-  const recommendedSharesText = formatRecommendedSharesDisplay(recommendedShares, parseNumberValue(t.buy_price), parseNumberValue(t.stop_loss)).text;
-  const buyRatingText = t.day_high&&t.day_low?formatPercent((t.day_high-t.buy_price)/(t.day_high-t.day_low)*100, 0):'—';
-  document.getElementById('modalBody').innerHTML=`
-    <div class="computed-card" style="margin-bottom:20px">
-      <div class="computed-item"><span class="computed-label">占用止损</span><span class="computed-val">${escapeHtml(usedStopText)}</span></div>
-      <div class="computed-item"><span class="computed-label">建议买入股数</span><span class="computed-val" id="m_recommendedShares">${escapeHtml(recommendedSharesText)}</span></div>
-      <div class="computed-item"><span class="computed-label">买入评级</span><span class="computed-val" id="m_buyRating">${escapeHtml(buyRatingText)}</span></div>
-      <div class="computed-item"><span class="computed-label">目标价</span><span class="computed-val">${escapeHtml(targetPrice!==null?formatCurrency(targetPrice, 3):'—')}</span></div>
-      <div class="computed-item"><span class="computed-label">盈亏</span><span class="computed-val ${pnlNet===null?'':pnlNet>=0?'':'danger'}" id="m_livePnl">${escapeHtml(pnlNet===null?'持仓中':formatCurrency(pnlNet, 2))}</span></div>
-    </div>
-    <div class="form-title" style="margin-bottom:16px">买入信息</div>
-    <div class="form-grid">
-      <div class="form-group"><label>股票代码</label><input type="text" id="m_stock" value="${escapeHtml(t.stock||'')}" style="text-transform:uppercase"></div>
-      <div class="form-group"><label>买入价</label><input type="number" id="m_buyPrice" value="${escapeHtml(formatInputNumber(t.buy_price))}" step="0.001" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>止损价</label><input type="number" id="m_stopLoss" value="${escapeHtml(formatInputNumber(t.stop_loss))}" step="0.001" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>股数</label><input type="number" id="m_shares" value="${escapeHtml(formatInputNumber(t.shares))}" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>买入日期</label><input type="date" id="m_buyDate" value="${escapeHtml(t.buy_date||'')}"></div>
-      <div class="form-group"><label>买入日最高价</label><input type="number" id="m_dayHigh" value="${escapeHtml(formatInputNumber(t.day_high))}" step="0.001" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>买入日最低价</label><input type="number" id="m_dayLow" value="${escapeHtml(formatInputNumber(t.day_low))}" step="0.001" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>止损理由</label><input type="text" id="m_stopReason" value="${escapeHtml(t.stop_reason||'')}"></div>
-      <div class="form-group"><label>目标盈利比例 (%)</label><input type="number" id="m_targetPct" value="${escapeHtml(formatInputNumber(targetPct))}" step="0.1" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>盈利目标价</label><input type="number" id="m_target" value="${escapeHtml(formatInputNumber(targetPrice, 3))}" step="0.001" readonly></div>
-      <div class="form-group"><label>占用止损额度</label><input type="text" id="m_usedStop" value="${escapeHtml(usedStopText)}" readonly></div>
-    </div>
-    <div class="form-title" style="margin:24px 0 16px">后续补充</div>
-    <div class="form-grid">
-      <div class="form-group"><label>通道高点</label><input type="number" id="m_chanHigh" value="${escapeHtml(formatInputNumber(t.chan_high))}" step="0.001"></div>
-      <div class="form-group"><label>通道低点</label><input type="number" id="m_chanLow" value="${escapeHtml(formatInputNumber(t.chan_low))}" step="0.001"></div>
-    </div>
-    <div class="form-title" style="margin:24px 0 16px">卖出信息</div>
-    <div class="form-grid">
-      <div class="form-group"><label>卖出价</label><input type="number" id="m_sell" value="${escapeHtml(formatInputNumber(t.sell_price))}" step="0.001" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>卖出日期</label><input type="date" id="m_sellDate" value="${escapeHtml(t.sell_date||'')}" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>卖出最高价</label><input type="number" id="m_sellHigh" value="${escapeHtml(formatInputNumber(t.sell_high))}" step="0.001"></div>
-      <div class="form-group"><label>卖出最低价</label><input type="number" id="m_sellLow" value="${escapeHtml(formatInputNumber(t.sell_low))}" step="0.001"></div>
-      <div class="form-group full"><label>卖出理由</label><input type="text" id="m_sellReason" value="${escapeHtml(t.sell_reason||'')}"></div>
-      <div class="form-group"><label>买入佣金</label><input type="number" id="m_buyComm" value="${escapeHtml(formatInputNumber(getCommissionValue(t.buy_comm, 1)))}" min="0" step="0.01" oninput="updateModalComputedFields()"></div>
-      <div class="form-group"><label>卖出佣金</label><input type="number" id="m_sellComm" value="${escapeHtml(formatInputNumber(getCommissionValue(t.sell_comm, 0)))}" min="0" step="0.01" oninput="updateModalComputedFields()"></div>
-      <div class="form-group full"><label>操作复盘</label><textarea id="m_review">${escapeHtml(t.review||'')}</textarea></div>
-    </div>
-    <div class="btn-row"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="updateBtn" onclick="updateTrade()">保存更新</button></div>`;
-  enhanceNumberInputs(document.getElementById('modalBody'));
-  updateModalComputedFields();
-}
-
-async function updateTrade() {
-  const t=trades.find(x=>sameId(x.id, editingId)); if(!t) return;
-  const stock=document.getElementById('m_stock').value.trim().toUpperCase();
-  const buyPrice=getNumberInputValue('m_buyPrice');
-  const stopLoss=getNumberInputValue('m_stopLoss');
-  const sharesRaw=getNumberInputValue('m_shares');
-  const shares=sharesRaw!==null?Math.floor(sharesRaw):null;
-  const sp=getNumberInputValue('m_sell');
-  const sellDate=document.getElementById('m_sellDate').value||null;
-  const bcInput=getNumberInputValue('m_buyComm');
-  const scInput=getNumberInputValue('m_sellComm');
-  const targetPct = parseTargetPctInput(getNumberInputValue('m_targetPct'));
-  const targetPrice = getTargetPrice(buyPrice, targetPct);
-  if(!stock||!buyPrice||!shares||!stopLoss){showAlert('tradeAlertZone','请填写完整的买入信息：股票代码、买入价、股数、止损价','danger');return;}
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
-  if (shares <= 0) { showAlert('tradeAlertZone','股数必须大于 0','danger'); return; }
-  const sellFieldsError = getSellFieldsError(sp, sellDate);
-  if (sellFieldsError) { showAlert('tradeAlertZone', sellFieldsError, 'danger'); return; }
-  const bc=getCommissionValue(bcInput, getCommissionValue(t.buy_comm, 1));
-  const isClosed = hasCompleteSellInfo(sp, sellDate);
-  const sc=getCommissionValue(scInput, isClosed ? getCommissionValue(t.sell_comm, 1) : getCommissionValue(t.sell_comm, 0));
-  const usedStop = riskPerShare * shares;
-  const pnl=isClosed ? calculateGrossPnl(buyPrice, sp, shares) : null;
-  const pnlNet=isClosed ? calculateNetPnl(pnl, bc, sc) : null;
-  const u={
-    stock,
-    buy_price:buyPrice,
-    stop_loss:stopLoss,
-    shares,
-    buy_date:document.getElementById('m_buyDate').value||null,
-    day_high:getNumberInputValue('m_dayHigh'),
-    day_low:getNumberInputValue('m_dayLow'),
-    stop_reason:document.getElementById('m_stopReason').value,
-    target_price:targetPrice,target_pct:targetPct,
-    chan_high:getNumberInputValue('m_chanHigh'),
-    chan_low:getNumberInputValue('m_chanLow'),
-    used_stop:usedStop,
-    sell_price:sp,sell_date:sellDate,
-    sell_high:getNumberInputValue('m_sellHigh'),
-    sell_low:getNumberInputValue('m_sellLow'),
-    sell_reason:document.getElementById('m_sellReason').value,
-    buy_comm:bc,sell_comm:sc,review:document.getElementById('m_review').value,pnl,pnl_net:pnlNet};
-  const btn=document.getElementById('updateBtn');
-  btn.disabled=true; btn.textContent='保存中…';
-  try { await updateTradeInDb(editingId,u); Object.assign(t,u); closeModal(); refreshAll(); showAlert('tradeAlertZone','✓ 交易已更新','ok'); }
-  catch(e) { showAlert('tradeAlertZone','更新失败：'+e.message,'danger'); }
-  finally { if(btn){btn.disabled=false;btn.textContent='保存更新';} }
-}
-
-function closeModal() { document.getElementById('editModal').classList.remove('open'); editingId=null; }
-
-// ── Render ───────────────────────────────────────────────────
-function renderTrades() {
-  const tbody=document.getElementById('tradeBody'), empty=document.getElementById('emptyState');
-  const monthTrades = getTradesForMonth(getCurrentReportMonth());
-  if(!monthTrades.length){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=monthTrades.map((t,i)=>{
-    const tradeId = escapeHtml(t.id);
-    const bp=parseFloat(t.buy_price),dh=parseFloat(t.day_high),dl=parseFloat(t.day_low);
-    const sh=parseFloat(t.sell_high),sl=parseFloat(t.sell_low),sp=parseFloat(t.sell_price);
-    const isClosed = isTradeClosed(t);
-    const hasPartialSell = hasPartialSellInfo(parseNumberValue(t.sell_price), t.sell_date);
-    const br=dh&&dl?formatPercent((dh-bp)/(dh-dl)*100, 0):'—';
-    const sr=sh&&sl&&sp?formatPercent((sp-sl)/(sh-sl)*100, 0):'—';
-    const targetPrice = getTradeTargetPrice(t);
-    const pn=getTradeNetPnl(t),pd=pn!==null?`<span class="${pn>=0?'pnl-pos':'pnl-neg'}">${formatCurrency(pn, 2)}</span>`:'—';
-    const st=isClosed
-      ? (pn>=0?'<span class="badge badge-win">盈利</span>':'<span class="badge badge-loss">亏损</span>')
-      : hasPartialSell
-        ? '<span class="badge badge-partial">待补卖出</span>'
-        : '<span class="badge badge-open">持仓中</span>';
-    return `<tr class="trade-row" data-trade-id="${tradeId}">
-      <td class="mono">${monthTrades.length-i}</td>
-      <td style="font-weight:700;color:var(--accent3)">${escapeHtml(t.stock)}</td>
-      <td class="mono">${formatCurrency(t.buy_price, 3)}</td>
-      <td class="mono" style="color:var(--red)">${formatCurrency(t.stop_loss, 3)}</td>
-      <td class="mono" style="color:var(--green)">${targetPrice!==null?formatCurrency(targetPrice, 2):'—'}</td>
-      <td class="mono">${t.shares}</td>
-      <td class="mono" style="color:${parseFloat(br)>=50?'var(--green)':'var(--yellow)'}">${br}</td>
-      <td class="mono">${t.used_stop!=null?formatCurrency(t.used_stop, 0):'—'}</td>
-      <td class="mono">${t.sell_price?formatCurrency(t.sell_price, 3):'—'}</td>
-      <td class="mono">${sr}</td><td>${pd}</td><td>${st}</td>
-      <td><button class="btn btn-danger delete-trade-btn" style="padding:4px 10px;font-size:11px" data-delete-id="${tradeId}">删除</button></td>
-    </tr>`;
-  }).join('');
-}
-
-function renderBanner() {
-  const s=getSettings(), used=getMonthLosses(s.month), l6=s.total*(s.monthStop/100);
-  const rem=Math.max(0,l6-used), up=l6>0?Math.min(100,used/l6*100):0;
-  document.getElementById('bannerTotal').textContent=s.total?formatCurrency(s.total, 0):'未设置';
-  document.getElementById('banner2pct').textContent=s.total?formatCurrency(s.total*s.singleStop/100, 0):'—';
-  document.getElementById('banner6pct').textContent=s.total?formatCurrency(l6, 0):'—';
-  document.getElementById('bannerUsed').textContent=formatCurrency(used, 2);
-  document.getElementById('bannerUsed').className='fund-value '+(up>80?'danger':up>50?'':'safe');
-  document.getElementById('bannerRemain').textContent=formatCurrency(rem, 2);
-  document.getElementById('bannerRemain').className='fund-value '+(rem<=0?'danger':rem<l6*0.3?'':'safe');
-  document.getElementById('riskBar').style.width=up+'%';
-  document.getElementById('riskBar').style.background=up>80?'var(--red)':up>50?'var(--yellow)':'var(--green)';
-  document.getElementById('riskPct').textContent=formatPercent(up, 0);
-  const az=document.getElementById('alertZone');
-  if(!s.total) az.innerHTML='<div class="alert alert-warn">⚠️ 请先在「设置」中填写总资金</div>';
-  else if(rem<=0) az.innerHTML='<div class="alert alert-danger">🛑 本月止损额度已耗尽，请停止交易！</div>';
-  else if(up>80) az.innerHTML=`<div class="alert alert-warn">⚠️ 已用${formatPercent(up, 0)}月度止损额度，请谨慎</div>`;
-  else az.innerHTML='';
-}
-
-function renderStats() {
-  const s=getSettings(), month=getCurrentReportMonth(), monthTrades = getTradesForMonth(month), closedTrades=getClosedTradesForMonth(month).filter(t=>getTradeNetPnl(t)!==null), openTrades=getOpenTradesForMonth(month);
-  const wins=closedTrades.filter(t=>getTradeNetPnl(t)>0), losses=closedTrades.filter(t=>getTradeNetPnl(t)<0);
-  const tp=closedTrades.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0);
-  const wr=closedTrades.length?(wins.length/closedTrades.length*100):0;
-  const aw=wins.length?wins.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/wins.length:0;
-  const al=losses.length?losses.reduce((sum,t)=>sum+(getTradeNetPnl(t) || 0),0)/losses.length:0;
-  const rr=aw&&al?formatNumber(Math.abs(aw/al), 2):'—';
-  document.getElementById('statsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-val ${tp>=0?'pnl-pos':'pnl-neg'}">${formatCurrency(tp, 2)}</div><div class="stat-label">总盈亏</div></div>
-    <div class="stat-card"><div class="stat-val">${closedTrades.length}</div><div class="stat-label">已结交易</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${formatPercent(wr, 1)}</div><div class="stat-label">胜率</div></div>
-    <div class="stat-card"><div class="stat-val pnl-pos">${formatCurrency(aw, 2)}</div><div class="stat-label">平均盈利</div></div>
-    <div class="stat-card"><div class="stat-val pnl-neg">${formatCurrency(al, 2)}</div><div class="stat-label">平均亏损</div></div>
-    <div class="stat-card"><div class="stat-val">${rr}</div><div class="stat-label">盈亏比 R:R</div></div>
-    <div class="stat-card"><div class="stat-val">${openTrades.length}</div><div class="stat-label">月末持仓数</div></div>
-    <div class="stat-card"><div class="stat-val">${monthTrades.length}</div><div class="stat-label">当月相关交易</div></div>`;
-  const realizedLoss=getMonthRealizedLosses(s.month), openRisk=getMonthOpenRisk(s.month), used=getMonthStopBudgetUsed(s.month), l6=s.total*(s.monthStop/100);
-  document.getElementById('monthlyReport').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px">
-      <div><div class="computed-label">统计月份</div><div class="computed-val">${s.month}</div></div>
-      <div><div class="computed-label">本月已实现亏损</div><div class="computed-val danger">${formatCurrency(realizedLoss, 2)}</div></div>
-      <div><div class="computed-label">月末持仓止损占用</div><div class="computed-val">${formatCurrency(openRisk, 2)}</div></div>
-      <div><div class="computed-label">月度止损已用</div><div class="computed-val ${used>l6?'danger':''}">${formatCurrency(used, 2)}</div></div>
-      <div><div class="computed-label">单笔上限 (${s.singleStop}%)</div><div class="computed-val">${formatCurrency(s.total*s.singleStop/100, 2)}</div></div>
-      <div><div class="computed-label">月度上限 (${s.monthStop}%)</div><div class="computed-val">${formatCurrency(l6, 2)}</div></div>
-      <div><div class="computed-label">剩余额度</div><div class="computed-val ${Math.max(0,l6-used)<=0?'danger':''}">${formatCurrency(Math.max(0,l6-used), 2)}</div></div>
-      <div><div class="computed-label">使用比例</div><div class="computed-val">${formatPercent(l6>0?(used/l6*100):0, 1)}</div></div>
-    </div>`;
-}
-
-function refreshAll() { updateRiskRuleLabels(); renderBanner(); renderTrades(); renderStats(); }
-
-// ── UI ────────────────────────────────────────────────────────
-function switchTab(n) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  ['trades','add','stats','settings'].forEach((name,i)=>{ if(name===n) document.querySelectorAll('.tab')[i].classList.add('active'); });
-  document.getElementById('panel-'+n).classList.add('active');
-  if(n==='add') computeFields();
-  if(n==='settings') loadSettingsUI();
-}
-function clearForm() {
-  ['f_stock','f_buyPrice','f_buyDate','f_dayHigh','f_dayLow','f_stopLoss','f_stopReason',
-   'f_target','f_targetPct','f_shares','f_chanHigh','f_chanLow',
-   'f_sellPrice','f_sellDate','f_sellHigh','f_sellLow','f_sellReason','f_buyComm','f_sellComm','f_review']
-  .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('f_buyDate').value=getLocalDateStamp();
-  computeFields();
-}
-function showAlert(id,msg,type) {
-  const el=document.getElementById(id); if(!el) return;
-  const safeType = ['danger', 'warn', 'ok'].includes(type) ? type : 'warn';
-  el.innerHTML=`<div class="alert alert-${safeType}"></div>`;
-  const alertBox = el.firstElementChild;
-  if (alertBox) alertBox.textContent = String(msg ?? '');
-  setTimeout(()=>{el.innerHTML='';},4000);
-}
-async function exportData() {
-  let result = await sbClient.from(DB_TABLE).select('*').order('created_at');
-  if (result.error) result = await sbClient.from(DB_TABLE).select('*');
-  const { data, error } = result;
-  if (error) { showAlert('tradeAlertZone', '导出失败：' + error.message, 'danger'); return; }
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download=`trade_journal_${getLocalDateStamp()}.json`;
-  a.click();
-}
-async function clearAll() {
-  if(!confirm('确定删除数据库中全部记录？')) return;
-  const { error } = await sbClient.from(DB_TABLE).delete().not('id', 'is', null);
-  if (error) { showAlert('tradeAlertZone', '清除失败：' + error.message, 'danger'); return; }
-  trades=[]; refreshAll();
-}
-function initUI() {
-  enhanceNumberInputs();
-  document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-  document.getElementById('f_buyDate').value=getLocalDateStamp();
-  if(!settings.month){settings.month=getLocalMonthStamp();cacheSettings();}
-  loadSettingsUI();
-  setSettingsSyncStatus('warn', `设置将同步到 Supabase 表 ${SETTINGS_TABLE}`);
-  document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-  document.getElementById('tradeBody').addEventListener('click', function (e) {
-    const deleteBtn = e.target.closest('.delete-trade-btn');
-    if (deleteBtn) {
-      e.stopPropagation();
-      deleteTrade(deleteBtn.dataset.deleteId);
-      return;
-    }
-    const row = e.target.closest('.trade-row');
-    if (row) openEditModal(row.dataset.tradeId);
+function enhanceNumberInputs(root = document) {
+  root.querySelectorAll('input[type="number"]').forEach((input) => {
+    if (input.dataset.boundLocale === '1') return;
+    input.lang = FIXED_NUMBER_LOCALE;
+    const normalize = () => {
+      const normalized = normalizeNumericText(input.value);
+      if (normalized && normalized !== input.value) input.value = normalized;
+    };
+    input.addEventListener('change', normalize);
+    input.addEventListener('blur', normalize);
+    input.dataset.boundLocale = '1';
   });
 }
 
-// ── Boot ──────────────────────────────────────────────────────
-setView('boot', '正在初始化页面并检查数据库连接…');
+function resetCaptureModeText() {
+  const editingTrade = trades.find((trade) => sameId(trade.id, editingId));
+  const modePill = document.getElementById('captureModePill');
+  const title = document.getElementById('captureTitle');
+  const subtitle = document.getElementById('captureSubtitle');
+  const cancelBtn = document.getElementById('captureCancelBtn');
+  if (!modePill || !title || !subtitle || !cancelBtn) return;
+  if (editingTrade) {
+    modePill.textContent = `Edit Mode • ${editingTrade.stock || 'Trade'}`;
+    title.textContent = `正在编辑 ${editingTrade.stock || '这笔交易'}`;
+    subtitle.textContent = '这是一页完整编辑页，买入信息、通道高低点、卖出记录和复盘都可以随时回来修改。';
+    cancelBtn.style.display = 'inline-flex';
+    document.getElementById('captureSaveBtn').textContent = '保存修改';
+  } else {
+    modePill.textContent = 'Create Mode';
+    title.textContent = '录入新的交易计划';
+    subtitle.textContent = '先确认 entry、stop 和仓位，再补管理细节和复盘。这个页同时也是你的完整编辑页，已有交易点开后也会在这里修改。';
+    cancelBtn.style.display = 'none';
+    document.getElementById('captureSaveBtn').textContent = '保存交易';
+  }
+}
+
+function computeCapture() {
+  const s = getSettings();
+  const total = s.total;
+  const maxLoss = total * (s.singleStop / 100);
+  const buyPrice = getNumberInputValue('f_buyPrice');
+  const stopLoss = getNumberInputValue('f_stopLoss');
+  const sharesRaw = getNumberInputValue('f_shares');
+  const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
+  const dayHigh = getNumberInputValue('f_dayHigh');
+  const dayLow = getNumberInputValue('f_dayLow');
+  const targetPct = parseTargetPctInput(getNumberInputValue('f_targetPct'));
+  const sellPrice = getNumberInputValue('f_sellPrice');
+  const sellDate = document.getElementById('f_sellDate').value || '';
+  const buyComm = getCommissionValue(getNumberInputValue('f_buyComm'), 1);
+  const sellComm = getCommissionValue(getNumberInputValue('f_sellComm'), hasCompleteSellInfo(sellPrice, sellDate) ? 1 : 0);
+  const targetPrice = getTargetPrice(buyPrice, targetPct);
+  const stopStatus = getStopStatus(buyPrice, stopLoss);
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
+  const buyRating = getBuyRating(buyPrice, dayHigh, dayLow);
+  const livePnl = hasCompleteSellInfo(sellPrice, sellDate)
+    ? calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares), buyComm, sellComm)
+    : null;
+
+  const stopStateEl = document.getElementById('calcStopState');
+  const maxLossEl = document.getElementById('calcMaxLoss');
+  const riskPerShareEl = document.getElementById('calcRiskPerShare');
+  const recommendedEl = document.getElementById('calcRecommendedShares');
+  const usedStopEl = document.getElementById('calcUsedStop');
+  const targetEl = document.getElementById('calcTargetPrice');
+  const ratingEl = document.getElementById('calcBuyRating');
+  const pnlEl = document.getElementById('calcLivePnl');
+  const targetInput = document.getElementById('f_targetPrice');
+
+  if (maxLossEl) maxLossEl.textContent = total ? formatCurrency(maxLoss, 2) : '—';
+
+  if (stopStateEl) {
+    if (!stopStatus) {
+      stopStateEl.textContent = '—';
+      stopStateEl.className = '';
+    } else if (stopStatus.type === 'breakeven') {
+      stopStateEl.textContent = '已保本';
+      stopStateEl.className = 'safe';
+    } else if (stopStatus.type === 'locked') {
+      stopStateEl.textContent = `已锁盈 ${formatPercent(stopStatus.pct, 2)}`;
+      stopStateEl.className = 'safe';
+    } else {
+      stopStateEl.textContent = formatPercent(stopStatus.pct, 2);
+      stopStateEl.className = stopStatus.pct > 8 ? 'warn' : '';
+    }
+  }
+
+  if (riskPerShareEl) {
+    riskPerShareEl.textContent = riskPerShare !== null ? formatCurrency(riskPerShare, 3) : '—';
+    riskPerShareEl.className = riskPerShare === 0 ? 'safe' : '';
+  }
+
+  if (recommendedEl) {
+    if (recommendedShares !== null) {
+      recommendedEl.textContent = formatShares(recommendedShares);
+      recommendedEl.className = '';
+    } else if (stopStatus?.type === 'breakeven' || stopStatus?.type === 'locked') {
+      recommendedEl.textContent = '无需建议';
+      recommendedEl.className = 'safe';
+    } else {
+      recommendedEl.textContent = '—';
+      recommendedEl.className = '';
+    }
+  }
+
+  if (usedStopEl) {
+    if (stopStatus?.type === 'breakeven') {
+      usedStopEl.textContent = '0（已保本）';
+      usedStopEl.className = 'safe';
+    } else if (stopStatus?.type === 'locked') {
+      usedStopEl.textContent = '0（已锁盈）';
+      usedStopEl.className = 'safe';
+    } else if (usedStop !== null) {
+      usedStopEl.textContent = formatCurrency(usedStop, 2);
+      usedStopEl.className = total && usedStop > maxLoss ? 'danger' : '';
+    } else {
+      usedStopEl.textContent = '—';
+      usedStopEl.className = '';
+    }
+  }
+
+  if (targetInput) targetInput.value = formatInputNumber(targetPrice, 3);
+  if (targetEl) targetEl.textContent = targetPrice !== null ? formatCurrency(targetPrice, 3) : '—';
+
+  if (ratingEl) {
+    if (buyRating !== null) {
+      ratingEl.textContent = formatPercent(buyRating, 0);
+      ratingEl.className = Math.round(buyRating) >= 50 ? 'safe' : 'warn';
+    } else {
+      ratingEl.textContent = '—';
+      ratingEl.className = '';
+    }
+  }
+
+  if (pnlEl) {
+    if (livePnl === null) {
+      pnlEl.textContent = '持仓中';
+      pnlEl.className = '';
+    } else {
+      pnlEl.textContent = formatCurrency(livePnl, 2);
+      pnlEl.className = livePnl >= 0 ? 'safe' : 'danger';
+    }
+  }
+
+  updateRecommendedShareButtons(recommendedShares, buyPrice, stopLoss);
+}
+
+function updateRecommendedShareButtons(recommendedShares, buyPrice = null, stopLoss = null) {
+  const stopStatus = getStopStatus(buyPrice, stopLoss);
+  ['fillSharesBtn', 'fillSharesInlineBtn'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const enabled = recommendedShares !== null && recommendedShares > 0;
+    btn.disabled = !enabled;
+    if (enabled) {
+      btn.textContent = `填入 ${formatNumber(recommendedShares, 0)} 股`;
+    } else if (stopStatus?.type === 'breakeven' || stopStatus?.type === 'locked') {
+      btn.textContent = '无需建议仓位';
+    } else {
+      btn.textContent = '使用建议值';
+    }
+  });
+}
+
+function applyRecommendedShares() {
+  const s = getSettings();
+  const buyPrice = getNumberInputValue('f_buyPrice');
+  const stopLoss = getNumberInputValue('f_stopLoss');
+  const maxLoss = s.total * (s.singleStop / 100);
+  const stopStatus = getStopStatus(buyPrice, stopLoss);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  if (recommendedShares === null || recommendedShares <= 0) {
+    if (stopStatus?.type === 'breakeven' || stopStatus?.type === 'locked') {
+      showAlert('captureAlert', '当前止损已在保本或锁盈位置，不需要推荐股数。', 'warn');
+      return;
+    }
+    showAlert('captureAlert', '请先填写有效的买入价、止损价和总资金，才能自动填入建议股数。', 'warn');
+    return;
+  }
+  const sharesInput = document.getElementById('f_shares');
+  if (sharesInput) sharesInput.value = String(recommendedShares);
+  computeCapture();
+}
+
+function insertReviewTemplate(kind) {
+  const textarea = document.getElementById('f_review');
+  if (!textarea) return;
+  const templates = {
+    plan: [
+      '计划名称：',
+      '触发条件：',
+      '为什么这里买：',
+      '止损为什么放这里：',
+      '如果走错如何处理：'
+    ].join('\n'),
+    review: [
+      '执行回顾：',
+      '情绪状态：',
+      '做对了什么：',
+      '犯了什么错：',
+      '下次怎么改：'
+    ].join('\n')
+  };
+  const block = templates[kind];
+  if (!block) return;
+  textarea.value = textarea.value.trim()
+    ? `${textarea.value.trim()}\n\n${block}`
+    : block;
+  textarea.focus();
+}
+
+function clearCaptureForm() {
+  [
+    'f_stock', 'f_buyDate', 'f_buyPrice', 'f_stopLoss', 'f_stopReason',
+    'f_dayHigh', 'f_dayLow', 'f_targetPct', 'f_targetPrice', 'f_shares',
+    'f_chanHigh', 'f_chanLow', 'f_buyComm', 'f_sellComm',
+    'f_sellDate', 'f_sellPrice', 'f_sellHigh', 'f_sellLow', 'f_sellReason',
+    'f_review'
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f_buyDate').value = getLocalDateStamp();
+  document.getElementById('f_buyComm').value = '1';
+  document.getElementById('f_sellComm').value = '';
+  computeCapture();
+}
+
+function cancelEditing() {
+  editingId = null;
+  resetCaptureModeText();
+  clearCaptureForm();
+  showAlert('captureAlert', '已退出编辑模式。', 'ok');
+}
+
+function startNewTrade() {
+  editingId = null;
+  resetCaptureModeText();
+  clearCaptureForm();
+  setPanel('capture');
+}
+
+function populateCaptureForm(trade) {
+  editingId = trade.id;
+  document.getElementById('f_stock').value = trade.stock || '';
+  document.getElementById('f_buyDate').value = trade.buy_date || '';
+  document.getElementById('f_buyPrice').value = formatInputNumber(trade.buy_price);
+  document.getElementById('f_stopLoss').value = formatInputNumber(trade.stop_loss);
+  document.getElementById('f_stopReason').value = trade.stop_reason || '';
+  document.getElementById('f_dayHigh').value = formatInputNumber(trade.day_high);
+  document.getElementById('f_dayLow').value = formatInputNumber(trade.day_low);
+  document.getElementById('f_targetPct').value = formatInputNumber(getTradeTargetPct(trade));
+  document.getElementById('f_targetPrice').value = formatInputNumber(getTradeTargetPrice(trade), 3);
+  document.getElementById('f_shares').value = formatInputNumber(trade.shares);
+  document.getElementById('f_chanHigh').value = formatInputNumber(trade.chan_high);
+  document.getElementById('f_chanLow').value = formatInputNumber(trade.chan_low);
+  document.getElementById('f_buyComm').value = formatInputNumber(getCommissionValue(trade.buy_comm, 1));
+  document.getElementById('f_sellComm').value = formatInputNumber(getCommissionValue(trade.sell_comm, isTradeClosed(trade) ? 1 : 0));
+  document.getElementById('f_sellDate').value = trade.sell_date || '';
+  document.getElementById('f_sellPrice').value = formatInputNumber(trade.sell_price);
+  document.getElementById('f_sellHigh').value = formatInputNumber(trade.sell_high);
+  document.getElementById('f_sellLow').value = formatInputNumber(trade.sell_low);
+  document.getElementById('f_sellReason').value = trade.sell_reason || '';
+  document.getElementById('f_review').value = trade.review || '';
+  resetCaptureModeText();
+  computeCapture();
+  setPanel('capture');
+}
+
+function editTrade(id) {
+  const trade = trades.find((item) => sameId(item.id, id));
+  if (!trade) return;
+  populateCaptureForm(trade);
+}
+
+function getCapturePayload() {
+  const stock = document.getElementById('f_stock').value.trim().toUpperCase();
+  const buyPrice = getNumberInputValue('f_buyPrice');
+  const stopLoss = getNumberInputValue('f_stopLoss');
+  const sharesRaw = getNumberInputValue('f_shares');
+  const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
+  const targetPct = parseTargetPctInput(getNumberInputValue('f_targetPct'));
+  const targetPrice = getTargetPrice(buyPrice, targetPct);
+  const sellPrice = getNumberInputValue('f_sellPrice');
+  const sellDate = document.getElementById('f_sellDate').value || null;
+  const isClosed = hasCompleteSellInfo(sellPrice, sellDate);
+  const buyComm = getCommissionValue(getNumberInputValue('f_buyComm'), 1);
+  const sellComm = getCommissionValue(getNumberInputValue('f_sellComm'), isClosed ? 1 : 0);
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
+  const grossPnl = isClosed ? calculateGrossPnl(buyPrice, sellPrice, shares) : null;
+  const pnlNet = isClosed ? calculateNetPnl(grossPnl, buyComm, sellComm) : null;
+  return {
+    stock,
+    buyPrice,
+    stopLoss,
+    shares,
+    targetPct,
+    targetPrice,
+    usedStop,
+    sellPrice,
+    sellDate,
+    buyComm,
+    sellComm,
+    pnl: grossPnl,
+    pnlNet,
+    stopReason: document.getElementById('f_stopReason').value.trim(),
+    buyDate: document.getElementById('f_buyDate').value || null,
+    dayHigh: getNumberInputValue('f_dayHigh'),
+    dayLow: getNumberInputValue('f_dayLow'),
+    chanHigh: getNumberInputValue('f_chanHigh'),
+    chanLow: getNumberInputValue('f_chanLow'),
+    sellHigh: getNumberInputValue('f_sellHigh'),
+    sellLow: getNumberInputValue('f_sellLow'),
+    sellReason: document.getElementById('f_sellReason').value.trim(),
+    review: document.getElementById('f_review').value.trim()
+  };
+}
+
+function validateCapturePayload(payload) {
+  if (!payload.stock || payload.buyPrice === null || payload.stopLoss === null || payload.shares === null) {
+    return '请填写必填项：股票代码、买入价、止损价、股数。';
+  }
+  if (payload.buyPrice <= 0) return '买入价必须大于 0。';
+  if (payload.shares <= 0) return '股数必须大于 0。';
+  const sellFieldsError = getSellFieldsError(payload.sellPrice, payload.sellDate);
+  if (sellFieldsError) return sellFieldsError;
+  return '';
+}
+
+function toRow(trade) {
+  return {
+    stock: trade.stock,
+    buy_price: trade.buyPrice,
+    shares: trade.shares,
+    stop_loss: trade.stopLoss,
+    stop_reason: trade.stopReason || null,
+    buy_date: trade.buyDate || null,
+    day_high: trade.dayHigh ?? null,
+    day_low: trade.dayLow ?? null,
+    target_price: trade.targetPrice ?? null,
+    target_pct: trade.targetPct ?? null,
+    chan_high: trade.chanHigh ?? null,
+    chan_low: trade.chanLow ?? null,
+    sell_price: trade.sellPrice ?? null,
+    sell_date: trade.sellDate || null,
+    sell_high: trade.sellHigh ?? null,
+    sell_low: trade.sellLow ?? null,
+    sell_reason: trade.sellReason || null,
+    buy_comm: trade.buyComm ?? 1,
+    sell_comm: trade.sellComm ?? 0,
+    review: trade.review || null,
+    used_stop: trade.usedStop ?? null,
+    pnl: trade.pnl ?? null,
+    pnl_net: trade.pnlNet ?? null
+  };
+}
+
+async function loadTrades() {
+  let result = await withTimeout(
+    sbClient.from(DB_TABLE).select('*').order('created_at', { ascending: false }),
+    10000,
+    '读取交易记录超时'
+  );
+  if (result.error) {
+    result = await withTimeout(
+      sbClient.from(DB_TABLE).select('*').order('buy_date', { ascending: false }),
+      10000,
+      '读取交易记录超时'
+    );
+  }
+  if (result.error) {
+    result = await withTimeout(
+      sbClient.from(DB_TABLE).select('*'),
+      10000,
+      '读取交易记录超时'
+    );
+  }
+  if (result.error) throw result.error;
+  trades = result.data || [];
+  refreshAll();
+}
+
+async function insertTrade(trade) {
+  const { data, error } = await sbClient.from(DB_TABLE).insert([toRow(trade)]).select().single();
+  if (error) throw error;
+  trades.unshift(data);
+}
+
+async function updateTradeInDb(id, updates) {
+  const { error } = await sbClient.from(DB_TABLE).update(updates).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteTradeInDb(id) {
+  const { error } = await sbClient.from(DB_TABLE).delete().eq('id', id);
+  if (error) throw error;
+}
+
+async function saveTrade() {
+  const payload = getCapturePayload();
+  const validationError = validateCapturePayload(payload);
+  if (validationError) {
+    showAlert('captureAlert', validationError, 'danger');
+    return;
+  }
+
+  const s = getSettings();
+  const maxLoss = s.total * (s.singleStop / 100);
+  if (s.total && payload.usedStop !== null && payload.usedStop > maxLoss) {
+    const ok = confirm(`这笔交易占用止损 ${formatCurrency(payload.usedStop, 2)}，已超过单笔 ${s.singleStop}% 上限 ${formatCurrency(maxLoss, 2)}。确定继续保存吗？`);
+    if (!ok) return;
+  }
+
+  const btn = document.getElementById('captureSaveBtn');
+  btn.disabled = true;
+  btn.textContent = editingId ? '保存修改中…' : '保存交易中…';
+  try {
+    if (editingId !== null) {
+      const updates = toRow(payload);
+      await updateTradeInDb(editingId, updates);
+      const existing = trades.find((trade) => sameId(trade.id, editingId));
+      if (existing) Object.assign(existing, updates);
+      showAlert('captureAlert', `✓ ${payload.stock} 已更新。`, 'ok');
+    } else {
+      await insertTrade(payload);
+      showAlert('captureAlert', `✓ ${payload.stock} 已保存到数据库。`, 'ok');
+    }
+    editingId = null;
+    resetCaptureModeText();
+    clearCaptureForm();
+    refreshAll();
+    setPanel('journal');
+  } catch (error) {
+    showAlert('captureAlert', `保存失败：${error.message || error}`, 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingId ? '保存修改' : '保存交易';
+    resetCaptureModeText();
+  }
+}
+
+async function deleteTrade(id) {
+  const trade = trades.find((item) => sameId(item.id, id));
+  if (!trade) return;
+  const ok = confirm(`确定删除 ${trade.stock || '这条记录'} 吗？`);
+  if (!ok) return;
+  try {
+    await deleteTradeInDb(id);
+    trades = trades.filter((item) => !sameId(item.id, id));
+    if (sameId(editingId, id)) cancelEditing();
+    refreshAll();
+    showAlert('globalAlertZone', '记录已删除。', 'ok');
+  } catch (error) {
+    showAlert('globalAlertZone', `删除失败：${error.message || error}`, 'danger');
+  }
+}
+
+function getTradeCardHtml(trade, compact = false) {
+  const status = getTradeStatusMeta(trade);
+  const buyPrice = parseNumberValue(trade.buy_price);
+  const stopLoss = parseNumberValue(trade.stop_loss);
+  const shares = parseNumberValue(trade.shares);
+  const targetPrice = getTradeTargetPrice(trade);
+  const usedStop = getTradeUsedStop(trade);
+  const pnlNet = getTradeNetPnl(trade);
+  const stopStatus = getStopStatus(buyPrice, stopLoss);
+  const buyRating = getBuyRating(buyPrice, parseNumberValue(trade.day_high), parseNumberValue(trade.day_low));
+  const sellRating = getSellRating(parseNumberValue(trade.sell_price), parseNumberValue(trade.sell_high), parseNumberValue(trade.sell_low));
+  const stopText = stopStatus?.type === 'breakeven'
+    ? '已保本'
+    : stopStatus?.type === 'locked'
+      ? `已锁盈 ${formatPercent(stopStatus.pct, 2)}`
+      : stopStatus
+        ? formatPercent(stopStatus.pct, 2)
+        : '—';
+  const usedStopText = stopStatus?.type === 'breakeven'
+    ? '0（已保本）'
+    : stopStatus?.type === 'locked'
+      ? '0（已锁盈）'
+      : formatCurrency(usedStop, 2);
+  const compactActions = compact
+    ? `<div class="btn-row"><button class="btn btn-secondary" onclick="editTrade('${escapeHtml(trade.id)}')">查看 / 编辑</button></div>`
+    : `<div class="btn-row"><button class="btn btn-secondary" onclick="editTrade('${escapeHtml(trade.id)}')">编辑</button><button class="btn btn-danger" onclick="deleteTrade('${escapeHtml(trade.id)}')">删除</button></div>`;
+  const reviewPreview = hasTextValue(trade.review) ? escapeHtml(trade.review).slice(0, compact ? 120 : 200) : '还没有写复盘。';
+  const noteTitle = compact ? '复盘摘录' : '交易笔记';
+  return `
+    <article class="trade-card">
+      <div class="trade-card-top">
+        <div class="trade-title">
+          <div class="trade-stock">
+            <strong>${escapeHtml(trade.stock || '—')}</strong>
+            <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
+            <small class="mono">买入 ${escapeHtml(trade.buy_date || '未填')} ${trade.sell_date ? `· 卖出 ${escapeHtml(trade.sell_date)}` : ''}</small>
+          </div>
+          <div class="muted" style="font-size:13px;line-height:1.7">${escapeHtml(trade.stop_reason || '未填写交易方法 / 止损依据')}</div>
+        </div>
+        <div class="trade-pnl ${pnlNet === null ? 'flat' : pnlNet >= 0 ? 'pos' : 'neg'}">${pnlNet === null ? '持仓中' : formatCurrency(pnlNet, 2)}</div>
+      </div>
+
+      <div class="trade-meta">
+        <div class="meta-cell"><span>买入 / 止损</span><strong>${formatCurrency(buyPrice, 3)} / ${formatCurrency(stopLoss, 3)}</strong></div>
+        <div class="meta-cell"><span>止损状态</span><strong>${stopText}</strong></div>
+        <div class="meta-cell"><span>目标价</span><strong>${targetPrice !== null ? formatCurrency(targetPrice, 3) : '—'}</strong></div>
+        <div class="meta-cell"><span>股数</span><strong>${shares !== null ? formatShares(shares) : '—'}</strong></div>
+        <div class="meta-cell"><span>占用止损</span><strong>${usedStopText}</strong></div>
+        <div class="meta-cell"><span>评级</span><strong>${buyRating !== null ? `买入 ${formatPercent(buyRating, 0)}` : '买入 —'}${sellRating !== null ? ` / 卖出 ${formatPercent(sellRating, 0)}` : ''}</strong></div>
+      </div>
+
+      <div class="trade-notes">
+        <div class="note-box">
+          <span>${noteTitle}</span>
+          <p>${reviewPreview}</p>
+        </div>
+        <div class="note-box">
+          <span>退出原因 / 管理备注</span>
+          <p>${escapeHtml(trade.sell_reason || '尚未填写')}</p>
+        </div>
+      </div>
+
+      <div class="trade-actions">
+        <div class="muted mono">${escapeHtml(getTradeBuyMonth(trade) || '—')} → ${escapeHtml(getTradeSellMonth(trade) || '持仓中')}</div>
+        ${compactActions}
+      </div>
+    </article>
+  `;
+}
+
+function renderOverview() {
+  const month = getCurrentReportMonth();
+  const monthTrades = getTradesForMonth(month);
+  const openTrades = getOpenTradesForMonth(month);
+  const closedTrades = getClosedTradesForMonth(month).filter((trade) => getTradeNetPnl(trade) !== null);
+  const reviewTrades = monthTrades.filter((trade) => hasTextValue(trade.review)).slice(0, 4);
+  const wins = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) >= 0);
+  const losses = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) < 0);
+  const realized = closedTrades.reduce((sum, trade) => sum + (getTradeNetPnl(trade) || 0), 0);
+  const openRisk = getMonthOpenRisk(month);
+  const avgUsedStop = openTrades.length ? openTrades.reduce((sum, trade) => sum + getTradeUsedStop(trade), 0) / openTrades.length : 0;
+  const planCoverage = monthTrades.length ? monthTrades.filter((trade) => hasTextValue(trade.stop_reason) && getTradeTargetPct(trade) !== null).length / monthTrades.length * 100 : 0;
+  const reviewCoverage = closedTrades.length ? closedTrades.filter((trade) => hasTextValue(trade.review)).length / closedTrades.length * 100 : 0;
+  const budget = getSettings().total * (getSettings().monthStop / 100);
+  const budgetUsed = getMonthStopBudgetUsed(month);
+  const moneyDiscipline = budget > 0 ? Math.max(0, 100 - Math.min(100, budgetUsed / budget * 100)) : 0;
+
+  document.getElementById('overviewMetricGrid').innerHTML = [
+    { label: '当月相关交易', value: monthTrades.length, sub: '包含跨月延续到本月的仓位' },
+    { label: '已结交易', value: closedTrades.length, sub: `${wins.length} 胜 / ${losses.length} 负` },
+    { label: '净结果', value: formatCurrency(realized, 2), sub: '只统计本月真正平仓的交易' },
+    { label: '月末持仓', value: openTrades.length, sub: '这些仓位会滚动占用月度预算' },
+    { label: '月末持仓风险', value: formatCurrency(openRisk, 2), sub: '止损不在买价下方时记为 0' },
+    { label: '平均占用止损', value: formatCurrency(avgUsedStop, 2), sub: '仅统计当前仍持仓的仓位' }
+  ].map((item) => `
+    <div class="mini-metric">
+      <div class="label">${escapeHtml(item.label)}</div>
+      <div class="value">${escapeHtml(String(item.value))}</div>
+      <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.7">${escapeHtml(item.sub)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('threeMGrid').innerHTML = [
+    {
+      pill: 'Mind',
+      value: formatPercent(reviewCoverage, 0),
+      text: '本月已结交易中，写了复盘文字的覆盖率。持续写复盘，才看得见自己重复的错误。'
+    },
+    {
+      pill: 'Method',
+      value: formatPercent(planCoverage, 0),
+      text: '当前月相关交易里，写明了交易方法/止损依据并设置了目标盈利比例的比例。'
+    },
+    {
+      pill: 'Money',
+      value: formatPercent(moneyDiscipline, 0),
+      text: '按当前月度风险预算反推出来的纪律得分，越高表示越接近预算内交易。'
+    }
+  ].map((item) => `
+    <div class="m-card">
+      <div class="m-pill">${escapeHtml(item.pill)}</div>
+      <strong>${escapeHtml(item.value)}</strong>
+      <p>${escapeHtml(item.text)}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('reviewExcerptList').innerHTML = reviewTrades.length
+    ? reviewTrades.map((trade) => getTradeCardHtml(trade, true)).join('')
+    : `<div class="empty-state">本月还没有写复盘的交易。<br>建议至少给每笔已结交易留下几句复盘。</div>`;
+
+  document.getElementById('overviewOpenList').innerHTML = openTrades.length
+    ? openTrades.slice(0, 4).map((trade) => getTradeCardHtml(trade, true)).join('')
+    : `<div class="empty-state">当前查看月份月末没有未结持仓。</div>`;
+
+  const recentClosed = closedTrades.slice().sort((a, b) => String(b.sell_date || '').localeCompare(String(a.sell_date || ''))).slice(0, 4);
+  document.getElementById('overviewClosedList').innerHTML = recentClosed.length
+    ? recentClosed.map((trade) => getTradeCardHtml(trade, true)).join('')
+    : `<div class="empty-state">当前月份还没有已结交易。</div>`;
+}
+
+function renderJournal() {
+  const filtered = getFilteredJournalTrades();
+  const list = document.getElementById('journalList');
+  const countLabel = document.getElementById('journalCountLabel');
+  const month = getCurrentReportMonth();
+  const monthLabel = document.getElementById('journalMonthCurrent');
+  if (countLabel) countLabel.textContent = `${filtered.length} 笔`;
+  if (monthLabel) monthLabel.textContent = `当前查看月份：${month}`;
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state">这个筛选条件下还没有交易记录。<br>你可以切换月份、状态，或者直接新建一笔交易。</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map((trade) => getTradeCardHtml(trade, false)).join('');
+}
+
+function renderHero() {
+  const s = getSettings();
+  const month = getCurrentReportMonth();
+  const singleStop = s.total * (s.singleStop / 100);
+  const monthBudget = s.total * (s.monthStop / 100);
+  const used = getMonthStopBudgetUsed(month);
+  const remaining = Math.max(0, monthBudget - used);
+  const pct = monthBudget > 0 ? Math.min(100, used / monthBudget * 100) : 0;
+
+  document.getElementById('heroTotal').textContent = s.total ? formatCurrency(s.total, 0) : '未设置';
+  document.getElementById('heroSingleStop').textContent = s.total ? formatCurrency(singleStop, 2) : '—';
+  document.getElementById('heroMonthBudget').textContent = s.total ? formatCurrency(monthBudget, 2) : '—';
+  document.getElementById('heroRemaining').textContent = s.total ? formatCurrency(remaining, 2) : '—';
+  document.getElementById('heroUsedPct').textContent = formatPercent(pct, 0);
+  document.getElementById('heroMonthSubtitle').textContent = `用于筛选交易日志、统计分析和月度风险预算。当前是 ${month}。`;
+  document.getElementById('heroTotalSub').textContent = s.total ? `当前单笔 ${s.singleStop}% / 月度 ${s.monthStop}% 风险规则已启用` : '先去设置里填总资金和风险比例';
+  document.getElementById('heroRemainingSub').textContent = `已用 ${formatCurrency(used, 2)}，剩余 ${formatCurrency(remaining, 2)}`;
+  document.getElementById('heroUsedText').textContent = `本月已实现亏损 ${formatCurrency(getMonthRealizedLosses(month), 2)} + 月末持仓风险 ${formatCurrency(getMonthOpenRisk(month), 2)}`;
+  const fill = document.getElementById('heroRiskFill');
+  fill.style.width = `${pct}%`;
+  fill.style.background = pct > 80 ? 'linear-gradient(90deg, var(--red), #ffad6d)' : pct > 50 ? 'linear-gradient(90deg, var(--yellow), #ffef93)' : 'linear-gradient(90deg, var(--green), var(--accent))';
+
+  clearGlobalAlert();
+  if (!s.total) {
+    showAlert('globalAlertZone', '请先在设置页填写总资金，否则页面无法准确计算单笔和月度止损预算。', 'warn');
+  } else if (remaining <= 0) {
+    showAlert('globalAlertZone', '本月止损预算已耗尽。按当前规则，建议暂停新开仓，优先处理现有持仓。', 'danger');
+  } else if (pct > 80) {
+    showAlert('globalAlertZone', `本月已使用 ${formatPercent(pct, 0)} 的止损预算，请谨慎出手。`, 'warn');
+  }
+}
+
+function renderStats() {
+  const s = getSettings();
+  const month = getCurrentReportMonth();
+  const monthTrades = getTradesForMonth(month);
+  const closedTrades = getClosedTradesForMonth(month).filter((trade) => getTradeNetPnl(trade) !== null);
+  const openTrades = getOpenTradesForMonth(month);
+  const wins = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) >= 0);
+  const losses = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) < 0);
+  const totalPnl = closedTrades.reduce((sum, trade) => sum + (getTradeNetPnl(trade) || 0), 0);
+  const winRate = closedTrades.length ? wins.length / closedTrades.length * 100 : 0;
+  const avgWin = wins.length ? wins.reduce((sum, trade) => sum + (getTradeNetPnl(trade) || 0), 0) / wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((sum, trade) => sum + Math.abs(getTradeNetPnl(trade) || 0), 0) / losses.length : 0;
+  const rr = avgWin && avgLoss ? avgWin / avgLoss : null;
+  const realizedLoss = getMonthRealizedLosses(month);
+  const openRisk = getMonthOpenRisk(month);
+  const used = getMonthStopBudgetUsed(month);
+  const budget = s.total * (s.monthStop / 100);
+  const remaining = Math.max(0, budget - used);
+  const reviewCoverage = closedTrades.length ? closedTrades.filter((trade) => hasTextValue(trade.review)).length / closedTrades.length * 100 : 0;
+
+  document.getElementById('statsGrid').innerHTML = [
+    { value: formatCurrency(totalPnl, 2), label: '本月净结果', desc: '只统计本月真正平仓的净利润', tone: totalPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+    { value: String(closedTrades.length), label: '已结交易', desc: '本月完成结算的交易数量' },
+    { value: formatPercent(winRate, 1), label: '胜率', desc: '盈利交易数 / 已结交易数', tone: 'var(--accent)' },
+    { value: avgWin ? formatCurrency(avgWin, 2) : '$0.00', label: '平均盈利', desc: '本月盈利单的平均净利润', tone: 'var(--green)' },
+    { value: avgLoss ? formatCurrency(avgLoss, 2) : '$0.00', label: '平均亏损', desc: '本月亏损单的平均净亏损', tone: 'var(--red)' },
+    { value: rr !== null ? formatNumber(rr, 2) : '—', label: '盈亏比', desc: '平均盈利 / 平均亏损' },
+    { value: String(openTrades.length), label: '月末持仓数', desc: '会继续滚动到下个月的仓位' },
+    { value: formatPercent(reviewCoverage, 0), label: '复盘覆盖率', desc: '已结交易里写了复盘的比例' }
+  ].map((item) => `
+    <div class="stats-card">
+      <strong style="${item.tone ? `color:${item.tone}` : ''}">${escapeHtml(item.value)}</strong>
+      <span>${escapeHtml(item.label)}</span>
+      <p>${escapeHtml(item.desc)}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('monthlyRiskGrid').innerHTML = [
+    { label: '统计月份', value: month },
+    { label: '本月相关交易', value: String(monthTrades.length) },
+    { label: '本月已实现亏损', value: formatCurrency(realizedLoss, 2) },
+    { label: '月末持仓止损占用', value: formatCurrency(openRisk, 2) },
+    { label: `单笔上限 (${s.singleStop}%)`, value: s.total ? formatCurrency(s.total * s.singleStop / 100, 2) : '—' },
+    { label: `月度上限 (${s.monthStop}%)`, value: s.total ? formatCurrency(budget, 2) : '—' },
+    { label: '月度止损已用', value: formatCurrency(used, 2) },
+    { label: '剩余额度', value: formatCurrency(remaining, 2) }
+  ].map((item) => `
+    <div class="mini-metric">
+      <div class="label">${escapeHtml(item.label)}</div>
+      <div class="value">${escapeHtml(item.value)}</div>
+    </div>
+  `).join('');
+
+  const suggestions = [];
+  if (!closedTrades.length) suggestions.push('本月还没有已结交易，可以重点观察持仓和计划执行情况。');
+  if (reviewCoverage < 50 && closedTrades.length) suggestions.push('已结交易里复盘覆盖率偏低，建议至少给每笔已结交易留几句复盘。');
+  if (budget > 0 && used > budget) suggestions.push('月度风险已经超预算，下个月要优先降低仓位和集中度。');
+  if (wins.length && losses.length && avgWin < avgLoss) suggestions.push('当前平均盈利还没有覆盖平均亏损，目标位或持仓管理可能偏保守。');
+  if (!suggestions.length) suggestions.push('本月的记录结构比较完整，接下来重点看哪些 setup 最稳定、哪些错误最常重复。');
+  document.getElementById('statsNarrative').innerHTML = suggestions.map((text) => `<div class="alert warn" style="margin-bottom:12px">${escapeHtml(text)}</div>`).join('');
+}
+
+function renderJournalCount() {
+  const label = document.getElementById('journalCountLabel');
+  if (!label) return;
+  label.textContent = `${getFilteredJournalTrades().length} 笔`;
+}
+
+function refreshAll() {
+  updateRiskRuleLabels();
+  syncMonthPickers();
+  resetCaptureModeText();
+  renderHero();
+  renderOverview();
+  renderJournal();
+  renderStats();
+  renderJournalCount();
+  computeCapture();
+}
+
+function saveConfig() {
+  const url = document.getElementById('cfg_url').value.trim();
+  const key = document.getElementById('cfg_key').value.trim();
+  if (!url || !key) {
+    document.getElementById('cfgError').innerHTML = '<div class="alert danger">请填写 URL 和 Key。</div>';
+    return;
+  }
+  safeStorageSet('sb_force_manual', '1');
+  safeStorageSet('sb_url', url);
+  safeStorageSet('sb_key', key);
+  document.getElementById('cfgBtn').disabled = true;
+  document.getElementById('cfgBtn').textContent = '连接中…';
+  setView('boot', '正在验证 Supabase 配置…');
+  initSupabase();
+}
+
+function resetConfig() {
+  safeStorageSet('sb_force_manual', '1');
+  safeStorageRemove('sb_url');
+  safeStorageRemove('sb_key');
+  location.reload();
+}
+
+async function initSupabase() {
+  const { url, key } = getSupabaseConfig();
+  prefillConfigInputs();
+  if (!url || !key) {
+    setView('config');
+    return;
+  }
+  try {
+    if (!window.supabase || !window.supabase.createClient) {
+      throw new Error('Supabase SDK 未加载，请检查网络后重试。');
+    }
+    setView('boot', '正在连接 Supabase…');
+    sbClient = window.supabase.createClient(url, key);
+    const { error } = await withTimeout(
+      sbClient.from(DB_TABLE).select('id').limit(1),
+      10000,
+      '数据库连接超时，请检查浏览器网络或插件拦截。'
+    );
+    if (error) throw error;
+    setDbStatus(true);
+    setView('app');
+    initUI();
+    loadSettingsFromDb().catch((err) => {
+      console.error(err);
+      setSettingsSyncStatus('warn', err.message || String(err));
+    });
+    loadTrades().catch((err) => {
+      console.error(err);
+      showAlert('globalAlertZone', `读取交易记录失败：${err.message || err}`, 'danger');
+    });
+  } catch (error) {
+    setDbStatus(false);
+    setView('config');
+    document.getElementById('cfgError').innerHTML = `<div class="alert danger">连接失败：${escapeHtml(error.message || error)}。请检查 URL、Key，以及 Supabase 中是否存在 <span class="mono">${escapeHtml(DB_TABLE)}</span> 表。</div>`;
+    const btn = document.getElementById('cfgBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '连接数据库';
+    }
+  }
+}
+
+async function exportData() {
+  if (!sbClient) return;
+  let result = await sbClient.from(DB_TABLE).select('*').order('created_at');
+  if (result.error) result = await sbClient.from(DB_TABLE).select('*');
+  if (result.error) {
+    showAlert('globalAlertZone', `导出失败：${result.error.message}`, 'danger');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(result.data || [], null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `trade_journal_${getLocalDateStamp()}.json`;
+  link.click();
+}
+
+async function clearAll() {
+  if (!sbClient) return;
+  const ok = confirm('确定删除数据库中全部交易记录吗？这个操作不能恢复。');
+  if (!ok) return;
+  const { error } = await sbClient.from(DB_TABLE).delete().not('id', 'is', null);
+  if (error) {
+    showAlert('globalAlertZone', `清除失败：${error.message}`, 'danger');
+    return;
+  }
+  trades = [];
+  cancelEditing();
+  refreshAll();
+  showAlert('globalAlertZone', '全部交易记录已清除。', 'ok');
+}
+
+function initUI() {
+  enhanceNumberInputs();
+  document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+  if (!settings.month) {
+    settings.month = getLocalMonthStamp();
+    cacheSettings();
+  }
+  clearCaptureForm();
+  loadSettingsUI();
+  setSettingsSyncStatus('warn', `设置将同步到 Supabase 表 ${SETTINGS_TABLE}`);
+}
+
+setView('boot', '正在初始化页面并检查 Supabase 数据库连接…');
 initSupabase();
 </script>
 </body>
