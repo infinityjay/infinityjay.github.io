@@ -79,14 +79,14 @@
   .gate-stack { display: grid; gap: 18px; margin-top: 24px; }
   .app-shell {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
     min-height: 100vh;
   }
   .sidebar {
     position: sticky;
     top: 0;
     height: 100vh;
-    padding: 28px 22px;
+    padding: 18px 14px;
     border-right: 1px solid var(--border);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
@@ -94,26 +94,26 @@
     backdrop-filter: blur(18px);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
   }
   .brand {
     display: grid;
-    gap: 12px;
-    padding: 18px;
+    gap: 10px;
+    padding: 14px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     background: linear-gradient(135deg, rgba(200, 255, 97, 0.11), rgba(127, 208, 210, 0.03));
   }
   .brand-mark {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
     display: grid;
     place-items: center;
     background: linear-gradient(135deg, rgba(200, 255, 97, 0.2), rgba(127, 208, 210, 0.08));
     border: 1px solid rgba(200, 255, 97, 0.24);
     color: var(--accent);
-    font-size: 24px;
+    font-size: 19px;
     font-weight: 800;
   }
   .brand-tag {
@@ -123,21 +123,16 @@
     font-size: 11px;
   }
   .brand h2 {
-    font-size: 24px;
+    font-size: 18px;
     line-height: 1.1;
-  }
-  .brand p {
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
   }
   .sidebar-card {
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     background: var(--panel-soft);
-    padding: 16px;
+    padding: 12px;
     display: grid;
-    gap: 12px;
+    gap: 10px;
   }
   .db-chip, .month-chip, .note-chip {
     display: inline-flex;
@@ -165,8 +160,8 @@
     border: 1px solid transparent;
     background: transparent;
     color: var(--muted);
-    padding: 14px 16px;
-    border-radius: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
     text-align: left;
     display: flex;
     align-items: center;
@@ -181,9 +176,9 @@
   }
   .nav-btn span:last-child { color: var(--accent); font-size: 12px; }
   .workspace {
-    padding: 28px;
+    padding: 18px;
     display: grid;
-    gap: 22px;
+    gap: 16px;
     min-width: 0;
   }
   .hero {
@@ -208,8 +203,8 @@
   }
   .hero-actions {
     display: grid;
-    gap: 16px;
-    padding: 24px;
+    gap: 12px;
+    padding: 16px;
     background:
       radial-gradient(circle at right top, rgba(200, 255, 97, 0.14), transparent 26%),
       radial-gradient(circle at left top, rgba(127, 208, 210, 0.1), transparent 20%),
@@ -227,30 +222,30 @@
   .hero-actions-top span { color: var(--muted); font-size: 13px; }
   .hero-main-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-    gap: 16px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(320px, 1.2fr);
+    gap: 12px;
     align-items: start;
   }
   .hero-quick {
     display: grid;
-    gap: 12px;
+    gap: 10px;
   }
   .hero-quick-card {
-    padding: 18px;
-    border-radius: 22px;
+    padding: 14px;
+    border-radius: 18px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.025);
     display: grid;
     gap: 14px;
   }
   .hero-quick-card h3 {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.2;
   }
   .hero-quick-card p {
     color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
+    font-size: 12px;
+    line-height: 1.55;
   }
   .hero-focus-list {
     display: grid;
@@ -261,8 +256,8 @@
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    padding: 14px 16px;
-    border-radius: 16px;
+    padding: 10px 12px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.018);
   }
@@ -272,13 +267,13 @@
     gap: 5px;
   }
   .hero-focus-copy strong {
-    font-size: 15px;
+    font-size: 13px;
     line-height: 1.2;
   }
   .hero-focus-copy span {
     color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
+    font-size: 11px;
+    line-height: 1.45;
   }
   .hero-grid {
     display: grid;
@@ -286,7 +281,7 @@
     gap: 12px;
   }
   .summary-card {
-    padding: 18px;
+    padding: 14px;
     background: rgba(255, 255, 255, 0.025);
   }
   .summary-label {
@@ -298,7 +293,7 @@
   }
   .summary-value {
     margin-top: 8px;
-    font-size: 27px;
+    font-size: 22px;
     line-height: 1.1;
     font-weight: 800;
   }
@@ -308,8 +303,8 @@
   .summary-sub {
     margin-top: 8px;
     color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
+    font-size: 11px;
+    line-height: 1.45;
   }
   .risk-track {
     height: 10px;
@@ -326,8 +321,8 @@
   }
   .panel-shell {
     display: none;
-    padding: 24px;
-    gap: 20px;
+    padding: 16px;
+    gap: 14px;
   }
   .panel-shell.active { display: grid; }
   .section-head {
@@ -355,32 +350,32 @@
   }
   .overview-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 18px;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 12px;
   }
   .stack {
     display: grid;
-    gap: 18px;
+    gap: 12px;
   }
   .info-card, .trade-card, .stats-card, .capture-card, .table-card {
-    padding: 20px;
+    padding: 16px;
   }
   .card-head {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     align-items: flex-start;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
   }
   .card-head h3 {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.2;
   }
   .card-head p {
     color: var(--muted);
-    font-size: 13px;
-    line-height: 1.7;
+    font-size: 12px;
+    line-height: 1.5;
     max-width: 60ch;
   }
   .metric-grid {
@@ -389,14 +384,14 @@
     gap: 12px;
   }
   .mini-metric {
-    padding: 16px;
-    border-radius: 16px;
+    padding: 12px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.02);
   }
   .mini-metric .value {
     margin-top: 8px;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 800;
   }
   .mini-metric .label {
@@ -436,6 +431,73 @@
   .trade-list {
     display: grid;
     gap: 14px;
+  }
+  .compact-table {
+    display: grid;
+    gap: 0;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .compact-head, .compact-row {
+    display: grid;
+    grid-template-columns: 1.15fr 0.58fr 0.9fr 0.72fr 0.98fr 0.56fr 0.78fr 0.84fr 1.05fr 0.8fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .compact-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.025);
+  }
+  .compact-head span {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .compact-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .compact-row:last-child { border-bottom: none; }
+  .compact-row:hover { background: rgba(255, 255, 255, 0.02); }
+  .compact-cell {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+  }
+  .compact-main {
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .compact-main.safe { color: var(--green); }
+  .compact-main.danger { color: var(--red); }
+  .compact-sub {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .compact-stock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .compact-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .compact-actions .btn {
+    padding: 9px 12px;
+    font-size: 12px;
   }
   .trade-card {
     display: grid;
@@ -828,6 +890,15 @@
     .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .filter-bar { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .compact-head { display: none; }
+    .compact-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+    .compact-actions {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+    }
     .span-2, .span-3, .span-4, .span-5, .span-6, .span-8 { grid-column: span 1; }
     .span-12 { grid-column: 1 / -1; }
     .trade-notes { grid-template-columns: 1fr; }
@@ -837,6 +908,7 @@
     .sidebar { padding: 18px; }
     .hero-copy, .hero-actions, .panel-shell, .info-card, .trade-card, .stats-card, .capture-card, .table-card { padding: 18px; }
     .trade-meta, .stats-grid, .metric-grid, .three-m-grid, .table-grid, .hero-grid { grid-template-columns: 1fr; }
+    .compact-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -879,7 +951,6 @@
         <div class="brand-mark">∿</div>
         <div class="brand-tag mono">Trading Journal</div>
         <h2>Atlas</h2>
-        <p>把计划、风险、执行和复盘放在同一张交易地图里，方便你像查档案一样回看每一笔交易。</p>
       </div>
 
       <div class="sidebar-card">
@@ -892,8 +963,8 @@
       </div>
 
       <div class="nav-list">
-        <button class="nav-btn active" data-panel="overview" onclick="setPanel('overview')"><span>总览回顾</span><span>01</span></button>
-        <button class="nav-btn" data-panel="journal" onclick="setPanel('journal')"><span>交易日志</span><span>02</span></button>
+        <button class="nav-btn" data-panel="overview" onclick="setPanel('overview')"><span>总览回顾</span><span>01</span></button>
+        <button class="nav-btn active" data-panel="journal" onclick="setPanel('journal')"><span>交易日志</span><span>02</span></button>
         <button class="nav-btn" data-panel="capture" onclick="setPanel('capture')"><span>录入 / 编辑</span><span>03</span></button>
         <button class="nav-btn" data-panel="stats" onclick="setPanel('stats')"><span>统计分析</span><span>04</span></button>
         <button class="nav-btn" data-panel="settings" onclick="setPanel('settings')"><span>设置</span><span>05</span></button>
@@ -904,7 +975,6 @@
           <button class="btn btn-primary" onclick="startNewTrade()">+ 新建交易</button>
           <button class="btn btn-secondary" onclick="exportData()">导出备份</button>
         </div>
-        <p class="muted" style="font-size:13px;line-height:1.8">参考 Elder 公开资料里强调的 Method、Money、记录与复盘，把月度风险、交易计划、执行结果和经验沉淀集中在一个页面里。</p>
       </div>
     </aside>
 
@@ -930,7 +1000,7 @@
                   <div>
                     <div class="eyebrow">Focus</div>
                     <h3>优先查看 / 编辑</h3>
-                    <p id="heroFocusIntro">把当前最值得处理的交易提前放到首页，避免每次都先扫一遍大块静态内容。</p>
+                    <p id="heroFocusIntro">优先展示当前最该处理的仓位和记录。</p>
                   </div>
                 </div>
                 <div class="hero-focus-list" id="heroFocusList"></div>
@@ -941,7 +1011,7 @@
                   <div>
                     <div class="eyebrow">Workspace</div>
                     <h3>快速入口</h3>
-                    <p id="heroEditState">如果你正在编辑某条交易，这里会显示继续编辑入口；否则给你最近最常用的两个入口。</p>
+                    <p id="heroEditState">当前编辑状态和高频入口。</p>
                   </div>
                 </div>
                 <div class="btn-row">
@@ -989,12 +1059,12 @@
 
       <div id="globalAlertZone"></div>
 
-      <section id="panel-overview" class="panel-shell active">
+      <section id="panel-overview" class="panel-shell">
         <div class="section-head">
           <div>
             <div class="eyebrow">Overview</div>
-            <h2>当前月份的交易全貌</h2>
-            <p>总览页把当前月相关交易、跨月持仓、复盘覆盖率和最近的关键记录放在一起，更适合每天开盘前和周末回顾时快速扫一遍。</p>
+            <h2>月度终端总览</h2>
+            <p>只保留风险节奏和核心记录，适合盘前快速扫一遍。</p>
           </div>
         </div>
 
@@ -1003,31 +1073,11 @@
             <div class="info-card">
               <div class="card-head">
                 <div>
-                  <h3>账户节奏</h3>
-                  <p>这里聚合当前月的已结交易、未结持仓和风险消耗，先看节奏，再决定要不要继续出手。</p>
+                  <h3>风险节奏</h3>
+                  <p>当前月的最小必要风险视图。</p>
                 </div>
               </div>
               <div class="metric-grid" id="overviewMetricGrid"></div>
-            </div>
-
-            <div class="info-card">
-              <div class="card-head">
-                <div>
-                  <h3>Three Ms 仪表</h3>
-                  <p>参考 Elder 公开资料里反复强调的 Mind、Method、Money，把当月复盘习惯、计划完整度和风险纪律可视化。</p>
-                </div>
-              </div>
-              <div class="three-m-grid" id="threeMGrid"></div>
-            </div>
-
-            <div class="info-card">
-              <div class="card-head">
-                <div>
-                  <h3>最近复盘摘录</h3>
-                  <p>把本月最近有复盘文字的交易放在这里，方便你持续回看自己到底在哪些地方重复犯错。</p>
-                </div>
-              </div>
-              <div class="trade-list" id="reviewExcerptList"></div>
             </div>
           </div>
 
@@ -1035,28 +1085,28 @@
             <div class="info-card">
               <div class="card-head">
                 <div>
-                  <h3>月末仍持仓</h3>
-                  <p>这些仓位会随着月份滚动继续占用月度止损预算，避免只看“本月新开仓”而忽略旧持仓的风险。</p>
+                  <h3>本月核心记录</h3>
+                  <p>最近要处理或最值得回看的交易。</p>
                 </div>
                 <button class="btn btn-secondary" onclick="setPanel('journal')">打开日志</button>
               </div>
-              <div class="trade-list" id="overviewOpenList"></div>
+              <div id="overviewCoreList"></div>
             </div>
 
             <div class="info-card">
               <div class="card-head">
                 <div>
-                  <h3>最近已结交易</h3>
-                  <p>便于快速看最近一段时间是按计划出场，还是被市场教育。</p>
+                  <h3>滚动持仓</h3>
+                  <p>继续占用月度风险预算的仓位。</p>
                 </div>
               </div>
-              <div class="trade-list" id="overviewClosedList"></div>
+              <div id="overviewOpenList"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="panel-journal" class="panel-shell">
+      <section id="panel-journal" class="panel-shell active">
         <div class="section-head">
           <div>
             <div class="eyebrow">Journal</div>
@@ -2571,22 +2621,99 @@ function getTradeCardHtml(trade, compact = false) {
   `;
 }
 
+function getCompactTradeTableHtml(tradeList, options = {}) {
+  const {
+    includeDelete = false,
+    emptyMessage = '暂无记录',
+    maxRows = null
+  } = options;
+  const rows = maxRows ? tradeList.slice(0, maxRows) : tradeList;
+  if (!rows.length) return `<div class="empty-state">${emptyMessage}</div>`;
+  return `
+    <div class="compact-table">
+      <div class="compact-head">
+        <span>标的</span>
+        <span>方向</span>
+        <span>入场</span>
+        <span>止损</span>
+        <span>平仓</span>
+        <span>股数</span>
+        <span>止损占用</span>
+        <span>净盈亏</span>
+        <span>计划 / 平仓原因</span>
+        <span>操作</span>
+      </div>
+      ${rows.map((trade) => {
+        const direction = normalizeDirection(trade.direction);
+        const status = getTradeStatusMeta(trade);
+        const targetPrice = getTradeTargetPrice(trade);
+        const pnlNet = getTradeNetPnl(trade);
+        const exitPrice = parseNumberValue(trade.sell_price);
+        const exitDate = trade.sell_date || '';
+        const stopStatus = getStopStatus(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss), direction);
+        const stopText = stopStatus?.type === 'locked'
+          ? '已锁盈'
+          : stopStatus?.type === 'breakeven'
+            ? '已保本'
+            : formatCurrency(getTradeUsedStop(trade), 2);
+        return `
+          <div class="compact-row">
+            <div class="compact-cell">
+              <div class="compact-stock">
+                <span class="compact-main">${escapeHtml(trade.stock || '—')}</span>
+                <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
+              </div>
+              <div class="compact-sub">${escapeHtml(trade.buy_date || '未填日期')}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${escapeHtml(getDirectionLabel(direction))}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${formatCurrency(trade.buy_price, 3)}</div>
+              <div class="compact-sub">目标 ${targetPrice !== null ? formatCurrency(targetPrice, 3) : '—'}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${formatCurrency(trade.stop_loss, 3)}</div>
+              <div class="compact-sub">${escapeHtml(stopText)}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${exitPrice !== null ? formatCurrency(exitPrice, 3) : '—'}</div>
+              <div class="compact-sub">${escapeHtml(exitDate || '未平仓')}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${formatShares(trade.shares)}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${formatCurrency(getTradeUsedStop(trade), 2)}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main ${pnlNet === null ? '' : pnlNet >= 0 ? 'safe' : 'danger'}">${pnlNet === null ? '持仓中' : formatCurrency(pnlNet, 2)}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="compact-main">${escapeHtml((trade.stop_reason || trade.sell_reason || '未填写').slice(0, 28))}</div>
+              <div class="compact-sub">${escapeHtml(trade.sell_reason ? `平仓：${trade.sell_reason}` : (trade.stop_reason || '未写计划'))}</div>
+            </div>
+            <div class="compact-actions">
+              <button class="btn btn-secondary" onclick="editTrade('${escapeHtml(trade.id)}')">编辑</button>
+              ${includeDelete ? `<button class="btn btn-danger" onclick="deleteTrade('${escapeHtml(trade.id)}')">删</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
 function renderOverview() {
   const month = getCurrentReportMonth();
   const monthTrades = getTradesForMonth(month);
   const openTrades = getOpenTradesForMonth(month);
   const closedTrades = getClosedTradesForMonth(month).filter((trade) => getTradeNetPnl(trade) !== null);
-  const reviewTrades = monthTrades.filter((trade) => hasTextValue(trade.review)).slice(0, 4);
   const wins = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) >= 0);
   const losses = closedTrades.filter((trade) => (getTradeNetPnl(trade) ?? 0) < 0);
   const realized = closedTrades.reduce((sum, trade) => sum + (getTradeNetPnl(trade) || 0), 0);
   const openRisk = getMonthOpenRisk(month);
   const avgUsedStop = openTrades.length ? openTrades.reduce((sum, trade) => sum + getTradeUsedStop(trade), 0) / openTrades.length : 0;
-  const planCoverage = monthTrades.length ? monthTrades.filter((trade) => hasTextValue(trade.stop_reason) && getTradeTargetPct(trade) !== null).length / monthTrades.length * 100 : 0;
-  const reviewCoverage = closedTrades.length ? closedTrades.filter((trade) => hasTextValue(trade.review)).length / closedTrades.length * 100 : 0;
-  const budget = getSettings().total * (getSettings().monthStop / 100);
-  const budgetUsed = getMonthStopBudgetUsed(month);
-  const moneyDiscipline = budget > 0 ? Math.max(0, 100 - Math.min(100, budgetUsed / budget * 100)) : 0;
 
   document.getElementById('overviewMetricGrid').innerHTML = [
     { label: '当月相关交易', value: monthTrades.length, sub: '包含跨月延续到本月的仓位' },
@@ -2603,42 +2730,15 @@ function renderOverview() {
     </div>
   `).join('');
 
-  document.getElementById('threeMGrid').innerHTML = [
-    {
-      pill: 'Mind',
-      value: formatPercent(reviewCoverage, 0),
-      text: '本月已结交易中，写了复盘文字的覆盖率。持续写复盘，才看得见自己重复的错误。'
-    },
-    {
-      pill: 'Method',
-      value: formatPercent(planCoverage, 0),
-      text: '当前月相关交易里，写明了交易方法/止损依据并设置了目标盈利比例的比例。'
-    },
-    {
-      pill: 'Money',
-      value: formatPercent(moneyDiscipline, 0),
-      text: '按当前月度风险预算反推出来的纪律得分，越高表示越接近预算内交易。'
-    }
-  ].map((item) => `
-    <div class="m-card">
-      <div class="m-pill">${escapeHtml(item.pill)}</div>
-      <strong>${escapeHtml(item.value)}</strong>
-      <p>${escapeHtml(item.text)}</p>
-    </div>
-  `).join('');
+  document.getElementById('overviewCoreList').innerHTML = getCompactTradeTableHtml(
+    monthTrades,
+    { emptyMessage: '当前月份还没有核心交易记录。', maxRows: 8 }
+  );
 
-  document.getElementById('reviewExcerptList').innerHTML = reviewTrades.length
-    ? reviewTrades.map((trade) => getTradeCardHtml(trade, true)).join('')
-    : `<div class="empty-state">本月还没有写复盘的交易。<br>建议至少给每笔已结交易留下几句复盘。</div>`;
-
-  document.getElementById('overviewOpenList').innerHTML = openTrades.length
-    ? openTrades.slice(0, 4).map((trade) => getTradeCardHtml(trade, true)).join('')
-    : `<div class="empty-state">当前查看月份月末没有未结持仓。</div>`;
-
-  const recentClosed = closedTrades.slice().sort((a, b) => String(b.sell_date || '').localeCompare(String(a.sell_date || ''))).slice(0, 4);
-  document.getElementById('overviewClosedList').innerHTML = recentClosed.length
-    ? recentClosed.map((trade) => getTradeCardHtml(trade, true)).join('')
-    : `<div class="empty-state">当前月份还没有已结交易。</div>`;
+  document.getElementById('overviewOpenList').innerHTML = getCompactTradeTableHtml(
+    openTrades,
+    { emptyMessage: '当前查看月份月末没有未结持仓。', maxRows: 8 }
+  );
 }
 
 function renderJournal() {
@@ -2653,7 +2753,10 @@ function renderJournal() {
     list.innerHTML = `<div class="empty-state">这个筛选条件下还没有交易记录。<br>你可以切换月份、状态，或者直接新建一笔交易。</div>`;
     return;
   }
-  list.innerHTML = filtered.map((trade) => getTradeCardHtml(trade, false)).join('');
+  list.innerHTML = getCompactTradeTableHtml(filtered, {
+    includeDelete: true,
+    emptyMessage: '这个筛选条件下还没有交易记录。'
+  });
 }
 
 function renderHero() {
@@ -2684,12 +2787,12 @@ function renderHero() {
   const continueBtn = document.getElementById('heroContinueEditBtn');
   const monthTrades = getTradesForMonth(month);
   const openTrades = getOpenTradesForMonth(month);
-  const focusTrades = (openTrades.length ? openTrades : monthTrades).slice(0, 4);
+  const focusTrades = (openTrades.length ? openTrades : monthTrades).slice(0, 3);
 
   if (focusIntro) {
     focusIntro.textContent = openTrades.length
-      ? '优先把还在持仓、还会继续占用月度止损预算的交易放到最上面。'
-      : '当前没有未结持仓时，这里会显示本月最近相关的交易，方便快速回看和编辑。';
+      ? '优先把还在持仓的交易放到最上面。'
+      : '当前没有未结持仓时，显示本月最近相关的交易。';
   }
 
   if (focusList) {
@@ -2718,8 +2821,8 @@ function renderHero() {
   if (continueBtn) continueBtn.textContent = editingTrade ? `继续编辑 ${editingTrade.stock || '当前交易'} · ${getDirectionLabel(editingTrade.direction)}` : '继续当前编辑';
   if (editState) {
     editState.textContent = editingTrade
-      ? `你当前正在编辑 ${editingTrade.stock || '一笔交易'} 的${getDirectionLabel(editingTrade.direction)}计划，可以直接继续，不需要重新去日志页寻找。`
-      : '这里保留最常用的两个入口，避免来回切页面。';
+      ? `正在编辑 ${editingTrade.stock || '一笔交易'} · ${getDirectionLabel(editingTrade.direction)}。`
+      : '保留录入和统计两个高频入口。';
   }
 
   clearGlobalAlert();
