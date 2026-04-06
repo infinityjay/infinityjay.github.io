@@ -449,7 +449,7 @@
   }
   .compact-head, .compact-row {
     display: grid;
-    grid-template-columns: 180px 72px 102px 96px 102px 78px 96px 102px minmax(240px, 1fr) 92px;
+    grid-template-columns: 174px 72px 98px 92px 98px 72px 92px 96px 120px minmax(220px, 1fr) 92px;
     gap: 8px;
     align-items: center;
   }
@@ -489,6 +489,43 @@
     font-size: 10px;
     line-height: 1.3;
     overflow-wrap: anywhere;
+  }
+  .rating-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .rating-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.03);
+    white-space: nowrap;
+  }
+  .rating-chip.safe {
+    color: var(--green);
+    background: rgba(83, 209, 139, 0.1);
+    border-color: rgba(83, 209, 139, 0.22);
+  }
+  .rating-chip.warn {
+    color: var(--yellow);
+    background: rgba(255, 211, 109, 0.1);
+    border-color: rgba(255, 211, 109, 0.22);
+  }
+  .rating-chip.danger {
+    color: var(--red);
+    background: rgba(255, 123, 109, 0.1);
+    border-color: rgba(255, 123, 109, 0.22);
+  }
+  .rating-chip.muted {
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.03);
   }
   .compact-stock {
     display: flex;
@@ -1193,7 +1230,7 @@
                 </div>
                 <div class="calc-row"><span>占用止损额度</span><strong id="calcUsedStop">—</strong></div>
                 <div class="calc-row"><span>目标价</span><strong id="calcTargetPrice">—</strong></div>
-                <div class="calc-row"><span>入场评级</span><strong id="calcBuyRating">—</strong></div>
+                <div class="calc-row"><span>评级</span><strong id="calcRatingSummary">买 — / 卖 — / 通 —</strong></div>
                 <div class="calc-row"><span>净利润预览</span><strong id="calcLivePnl">持仓中</strong></div>
               </div>
             </div>
@@ -1858,6 +1895,29 @@ function getSellRating(exitPrice, sellHigh, sellLow, direction = 'long') {
     : (exitPrice - sellLow) / (sellHigh - sellLow) * 100;
 }
 
+function getChannelRating(entryPrice, chanHigh, chanLow, direction = 'long') {
+  if (entryPrice === null || chanHigh === null || chanLow === null || chanHigh === chanLow) return null;
+  return normalizeDirection(direction) === 'short'
+    ? (entryPrice - chanLow) / (chanHigh - chanLow) * 100
+    : (chanHigh - entryPrice) / (chanHigh - chanLow) * 100;
+}
+
+function formatRatingValue(value) {
+  return value === null ? '—' : formatPercent(Math.max(0, Math.min(100, value)), 0);
+}
+
+function getRatingTone(value) {
+  if (value === null) return 'muted';
+  const normalized = Math.max(0, Math.min(100, value));
+  if (normalized >= 60) return 'safe';
+  if (normalized >= 40) return 'warn';
+  return 'danger';
+}
+
+function getRatingChipHtml(label, value) {
+  return `<span class="rating-chip ${getRatingTone(value)}">${escapeHtml(label)} ${escapeHtml(formatRatingValue(value))}</span>`;
+}
+
 function getJournalSearchText(trade) {
   return [
     trade.stock,
@@ -2087,9 +2147,13 @@ function computeCapture() {
   const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
   const dayHigh = getNumberInputValue('f_dayHigh');
   const dayLow = getNumberInputValue('f_dayLow');
+  const chanHigh = getNumberInputValue('f_chanHigh');
+  const chanLow = getNumberInputValue('f_chanLow');
   const targetPct = parseTargetPctInput(getNumberInputValue('f_targetPct'));
   const sellPrice = getNumberInputValue('f_sellPrice');
   const sellDate = document.getElementById('f_sellDate').value || '';
+  const sellHigh = getNumberInputValue('f_sellHigh');
+  const sellLow = getNumberInputValue('f_sellLow');
   const buyComm = getCommissionValue(getNumberInputValue('f_buyComm'), 1);
   const sellComm = getCommissionValue(getNumberInputValue('f_sellComm'), hasCompleteSellInfo(sellPrice, sellDate) ? 1 : 0);
   const targetPrice = getTargetPrice(buyPrice, targetPct, direction);
@@ -2098,6 +2162,8 @@ function computeCapture() {
   const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss, direction);
   const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
   const buyRating = getBuyRating(buyPrice, dayHigh, dayLow, direction);
+  const sellRating = getSellRating(sellPrice, sellHigh, sellLow, direction);
+  const channelRating = getChannelRating(buyPrice, chanHigh, chanLow, direction);
   const livePnl = hasCompleteSellInfo(sellPrice, sellDate)
     ? calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares, direction), buyComm, sellComm)
     : null;
@@ -2108,7 +2174,7 @@ function computeCapture() {
   const recommendedEl = document.getElementById('calcRecommendedShares');
   const usedStopEl = document.getElementById('calcUsedStop');
   const targetEl = document.getElementById('calcTargetPrice');
-  const ratingEl = document.getElementById('calcBuyRating');
+  const ratingEl = document.getElementById('calcRatingSummary');
   const pnlEl = document.getElementById('calcLivePnl');
   const targetInput = document.getElementById('f_targetPrice');
 
@@ -2168,13 +2234,14 @@ function computeCapture() {
   if (targetEl) targetEl.textContent = targetPrice !== null ? formatCurrency(targetPrice, 3) : '—';
 
   if (ratingEl) {
-    if (buyRating !== null) {
-      ratingEl.textContent = formatPercent(buyRating, 0);
-      ratingEl.className = Math.round(buyRating) >= 50 ? 'safe' : 'warn';
-    } else {
-      ratingEl.textContent = '—';
-      ratingEl.className = '';
-    }
+    ratingEl.innerHTML = `
+      <span class="rating-line">
+        ${getRatingChipHtml('买', buyRating)}
+        ${getRatingChipHtml('卖', sellRating)}
+        ${getRatingChipHtml('通', channelRating)}
+      </span>
+    `;
+    ratingEl.className = '';
   }
 
   if (pnlEl) {
@@ -2561,6 +2628,7 @@ function getTradeCardHtml(trade, compact = false) {
   const stopStatus = getStopStatus(buyPrice, stopLoss, direction);
   const buyRating = getBuyRating(buyPrice, parseNumberValue(trade.day_high), parseNumberValue(trade.day_low), direction);
   const sellRating = getSellRating(parseNumberValue(trade.sell_price), parseNumberValue(trade.sell_high), parseNumberValue(trade.sell_low), direction);
+  const channelRating = getChannelRating(buyPrice, parseNumberValue(trade.chan_high), parseNumberValue(trade.chan_low), direction);
   const stopText = stopStatus?.type === 'breakeven'
     ? '已保本'
     : stopStatus?.type === 'locked'
@@ -2600,7 +2668,7 @@ function getTradeCardHtml(trade, compact = false) {
         <div class="meta-cell"><span>目标价</span><strong>${targetPrice !== null ? formatCurrency(targetPrice, 3) : '—'}</strong></div>
         <div class="meta-cell"><span>股数</span><strong>${shares !== null ? formatShares(shares) : '—'}</strong></div>
         <div class="meta-cell"><span>占用止损</span><strong>${usedStopText}</strong></div>
-        <div class="meta-cell"><span>评级</span><strong>${buyRating !== null ? `入场 ${formatPercent(buyRating, 0)}` : '入场 —'}${sellRating !== null ? ` / 平仓 ${formatPercent(sellRating, 0)}` : ''}</strong></div>
+        <div class="meta-cell"><span>评级</span><strong class="rating-line">${getRatingChipHtml('买', buyRating)}${getRatingChipHtml('卖', sellRating)}${channelRating !== null ? getRatingChipHtml('通', channelRating) : ''}</strong></div>
       </div>
 
       <div class="trade-notes">
@@ -2642,6 +2710,7 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
           <span>股数</span>
           <span>止损占用</span>
           <span>净盈亏</span>
+          <span>评级</span>
           <span>计划 / 平仓原因</span>
           <span class="compact-sticky-right">操作</span>
         </div>
@@ -2652,6 +2721,9 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
         const pnlNet = getTradeNetPnl(trade);
         const exitPrice = parseNumberValue(trade.sell_price);
         const exitDate = trade.sell_date || '';
+        const buyRating = getBuyRating(parseNumberValue(trade.buy_price), parseNumberValue(trade.day_high), parseNumberValue(trade.day_low), direction);
+        const sellRating = getSellRating(exitPrice, parseNumberValue(trade.sell_high), parseNumberValue(trade.sell_low), direction);
+        const channelRating = getChannelRating(parseNumberValue(trade.buy_price), parseNumberValue(trade.chan_high), parseNumberValue(trade.chan_low), direction);
         const stopStatus = getStopStatus(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss), direction);
         const stopText = stopStatus?.type === 'locked'
           ? '已锁盈'
@@ -2690,6 +2762,15 @@ function getCompactTradeTableHtml(tradeList, options = {}) {
             </div>
             <div class="compact-cell">
               <div class="compact-main ${pnlNet === null ? '' : pnlNet >= 0 ? 'safe' : 'danger'}">${pnlNet === null ? '持仓中' : formatCurrency(pnlNet, 2)}</div>
+            </div>
+            <div class="compact-cell">
+              <div class="rating-line">
+                ${getRatingChipHtml('买', buyRating)}
+                ${getRatingChipHtml('卖', sellRating)}
+              </div>
+              <div class="rating-line">
+                ${getRatingChipHtml('通', channelRating)}
+              </div>
             </div>
             <div class="compact-cell">
               <div class="compact-main">${escapeHtml((trade.stop_reason || trade.sell_reason || '未填写').slice(0, 28))}</div>
