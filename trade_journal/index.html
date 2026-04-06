@@ -1079,7 +1079,7 @@
               <option value="loss">亏损</option>
               <option value="planned">计划完整</option>
             </select>
-            <input class="input" type="search" id="journalSearchInput" placeholder="搜索股票、交易计划、卖出原因、复盘关键词…" oninput="refreshAll()">
+            <input class="input" type="search" id="journalSearchInput" placeholder="搜索股票、方向、交易计划、平仓原因、复盘关键词…" oninput="refreshAll()">
             <div class="month-chip mono" id="journalCountLabel">0 笔</div>
           </div>
         </div>
@@ -1117,7 +1117,7 @@
                 <div class="calc-row"><span>止损状态</span><strong id="calcStopState">—</strong></div>
                 <div class="calc-row"><span>每股风险</span><strong id="calcRiskPerShare">—</strong></div>
                 <div class="calc-row">
-                  <span>建议买入股数</span>
+                  <span>建议仓位股数</span>
                   <strong id="calcRecommendedShares">—</strong>
                   <div class="btn-row" style="margin-top:12px">
                     <button class="btn btn-secondary" id="fillSharesBtn" type="button" onclick="applyRecommendedShares()" disabled>使用建议值</button>
@@ -1125,7 +1125,7 @@
                 </div>
                 <div class="calc-row"><span>占用止损额度</span><strong id="calcUsedStop">—</strong></div>
                 <div class="calc-row"><span>目标价</span><strong id="calcTargetPrice">—</strong></div>
-                <div class="calc-row"><span>买入评级</span><strong id="calcBuyRating">—</strong></div>
+                <div class="calc-row"><span>入场评级</span><strong id="calcBuyRating">—</strong></div>
                 <div class="calc-row"><span>净利润预览</span><strong id="calcLivePnl">持仓中</strong></div>
               </div>
             </div>
@@ -1134,7 +1134,7 @@
               <div class="card-head">
                 <div>
                   <h3>录入逻辑</h3>
-                  <p>1. 先定买入价和止损价。2. 再根据最大可损失决定仓位。3. 目标价由目标盈利比例自动反推。4. 通道高低点和卖出信息可以后续再补。</p>
+                  <p>1. 先定方向、入场价和止损价。2. 再根据最大可损失决定仓位。3. 目标价由目标盈利比例自动反推。4. 通道高低点和平仓信息可以后续再补。</p>
                 </div>
               </div>
             </div>
@@ -1155,11 +1155,18 @@
                   <input class="input" type="text" id="f_stock" placeholder="NVDA" oninput="computeCapture()" style="text-transform:uppercase">
                 </div>
                 <div class="field-group span-3">
-                  <label>买入日期</label>
+                  <label>方向 *</label>
+                  <select class="select" id="f_direction" onchange="computeCapture()">
+                    <option value="long">做多</option>
+                    <option value="short">做空</option>
+                  </select>
+                </div>
+                <div class="field-group span-3">
+                  <label>入场日期</label>
                   <input class="input mono" type="date" id="f_buyDate">
                 </div>
                 <div class="field-group span-3">
-                  <label>买入价 *</label>
+                  <label>入场价 *</label>
                   <input class="input" type="number" id="f_buyPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-3">
@@ -1172,11 +1179,11 @@
                   <input class="input" type="text" id="f_stopReason" placeholder="Pullback to Value / 前低下方" oninput="refreshAll()">
                 </div>
                 <div class="field-group span-2">
-                  <label>买入日最高价</label>
+                  <label>入场日最高价</label>
                   <input class="input" type="number" id="f_dayHigh" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-2">
-                  <label>买入日最低价</label>
+                  <label>入场日最低价</label>
                   <input class="input" type="number" id="f_dayLow" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-2">
@@ -1204,11 +1211,11 @@
                   <input class="input" type="number" id="f_chanLow" step="0.001" placeholder="后续补充">
                 </div>
                 <div class="field-group span-2">
-                  <label>买入佣金 ($)</label>
+                  <label>开仓佣金 ($)</label>
                   <input class="input" type="number" id="f_buyComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-2">
-                  <label>卖出佣金 ($)</label>
+                  <label>平仓佣金 ($)</label>
                   <input class="input" type="number" id="f_sellComm" step="0.01" min="0" placeholder="1.00" oninput="computeCapture()">
                 </div>
               </div>
@@ -1217,31 +1224,31 @@
             <div class="capture-card">
               <div class="capture-card-header">
                 <div>
-                  <h3>2. 卖出与管理</h3>
-                  <p>卖出部分可以先留空。等交易结束后再把真实的离场价、卖出日高低点和退出原因补齐。</p>
+                  <h3>2. 平仓与管理</h3>
+                  <p>平仓部分可以先留空。等交易结束后再把真实的离场价、平仓日高低点和退出原因补齐。</p>
                 </div>
               </div>
 
               <div class="form-grid">
                 <div class="field-group span-3">
-                  <label>卖出日期</label>
+                  <label>平仓日期</label>
                   <input class="input mono" type="date" id="f_sellDate" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-3">
-                  <label>卖出价</label>
+                  <label>平仓价</label>
                   <input class="input" type="number" id="f_sellPrice" step="0.001" placeholder="0.000" oninput="computeCapture()">
                 </div>
                 <div class="field-group span-3">
-                  <label>卖出日最高价</label>
+                  <label>平仓日最高价</label>
                   <input class="input" type="number" id="f_sellHigh" step="0.001" placeholder="0.000">
                 </div>
                 <div class="field-group span-3">
-                  <label>卖出日最低价</label>
+                  <label>平仓日最低价</label>
                   <input class="input" type="number" id="f_sellLow" step="0.001" placeholder="0.000">
                 </div>
                 <div class="field-group span-12">
-                  <label>退出原因</label>
-                  <input class="input" type="text" id="f_sellReason" placeholder="触发止损 / 到达目标 / 提前减仓 / 趋势破坏">
+                  <label>平仓原因</label>
+                  <input class="input" type="text" id="f_sellReason" placeholder="触发止损 / 到达目标 / 回补 / 趋势破坏">
                 </div>
               </div>
             </div>
@@ -1565,6 +1572,18 @@ function parseTargetPctInput(value) {
   return pct;
 }
 
+function normalizeDirection(value) {
+  return String(value || 'long').toLowerCase() === 'short' ? 'short' : 'long';
+}
+
+function getDirectionLabel(value) {
+  return normalizeDirection(value) === 'short' ? '做空' : '做多';
+}
+
+function getDirectionPrefix(value) {
+  return normalizeDirection(value) === 'short' ? '空' : '多';
+}
+
 function normalizeStoredTargetPctValue(value) {
   const pct = parseNumberValue(value);
   if (pct === null || pct < 0) return null;
@@ -1572,11 +1591,13 @@ function normalizeStoredTargetPctValue(value) {
   return pct;
 }
 
-function getTargetPrice(buyPrice, targetPct) {
-  if (buyPrice === null) return null;
+function getTargetPrice(entryPrice, targetPct, direction = 'long') {
+  if (entryPrice === null) return null;
   const pct = parseTargetPctInput(targetPct);
   if (pct === null) return null;
-  return buyPrice * (1 + pct / 100);
+  return normalizeDirection(direction) === 'short'
+    ? Math.max(0, entryPrice * (1 - pct / 100))
+    : entryPrice * (1 + pct / 100);
 }
 
 function getCommissionValue(value, fallback = 0) {
@@ -1585,22 +1606,26 @@ function getCommissionValue(value, fallback = 0) {
   return Math.abs(parsed);
 }
 
-function getRiskPerShare(buyPrice, stopLoss) {
-  if (buyPrice === null || stopLoss === null) return null;
-  const diff = buyPrice - stopLoss;
+function getRiskPerShare(entryPrice, stopLoss, direction = 'long') {
+  if (entryPrice === null || stopLoss === null) return null;
+  const diff = normalizeDirection(direction) === 'short'
+    ? stopLoss - entryPrice
+    : entryPrice - stopLoss;
   return diff > 0 ? diff : 0;
 }
 
-function getStopStatus(buyPrice, stopLoss) {
-  if (buyPrice === null || stopLoss === null || buyPrice <= 0) return null;
-  const diff = stopLoss - buyPrice;
+function getStopStatus(entryPrice, stopLoss, direction = 'long') {
+  if (entryPrice === null || stopLoss === null || entryPrice <= 0) return null;
+  const diff = normalizeDirection(direction) === 'short'
+    ? entryPrice - stopLoss
+    : stopLoss - entryPrice;
   if (Math.abs(diff) < 1e-9) return { type: 'breakeven', pct: 0 };
-  if (diff > 0) return { type: 'locked', pct: diff / buyPrice * 100 };
-  return { type: 'risk', pct: Math.abs(diff) / buyPrice * 100 };
+  if (diff > 0) return { type: 'locked', pct: diff / entryPrice * 100 };
+  return { type: 'risk', pct: Math.abs(diff) / entryPrice * 100 };
 }
 
-function getRecommendedShares(maxLoss, buyPrice, stopLoss) {
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+function getRecommendedShares(maxLoss, entryPrice, stopLoss, direction = 'long') {
+  const riskPerShare = getRiskPerShare(entryPrice, stopLoss, direction);
   if (riskPerShare === null || riskPerShare <= 0 || !maxLoss || maxLoss <= 0) return null;
   const shares = Math.floor(maxLoss / riskPerShare);
   return shares > 0 ? shares : 0;
@@ -1618,9 +1643,11 @@ function isTradeClosed(trade) {
   return hasCompleteSellInfo(parseNumberValue(trade.sell_price), trade.sell_date);
 }
 
-function calculateGrossPnl(buyPrice, sellPrice, shares) {
-  if (buyPrice === null || sellPrice === null || shares === null) return null;
-  return (sellPrice - buyPrice) * shares;
+function calculateGrossPnl(entryPrice, exitPrice, shares, direction = 'long') {
+  if (entryPrice === null || exitPrice === null || shares === null) return null;
+  return normalizeDirection(direction) === 'short'
+    ? (entryPrice - exitPrice) * shares
+    : (exitPrice - entryPrice) * shares;
 }
 
 function calculateNetPnl(grossPnl, buyComm, sellComm) {
@@ -1630,10 +1657,11 @@ function calculateNetPnl(grossPnl, buyComm, sellComm) {
 
 function getTradeNetPnl(trade) {
   if (!isTradeClosed(trade)) return null;
+  const direction = normalizeDirection(trade.direction);
   const buyPrice = parseNumberValue(trade.buy_price);
   const sellPrice = parseNumberValue(trade.sell_price);
   const shares = parseNumberValue(trade.shares);
-  const gross = calculateGrossPnl(buyPrice, sellPrice, shares);
+  const gross = calculateGrossPnl(buyPrice, sellPrice, shares, direction);
   return calculateNetPnl(gross, getCommissionValue(trade.buy_comm, 0), getCommissionValue(trade.sell_comm, 0));
 }
 
@@ -1644,13 +1672,13 @@ function getTradeTargetPct(trade) {
 function getTradeTargetPrice(trade) {
   const stored = parseNumberValue(trade.target_price);
   if (stored !== null) return stored;
-  return getTargetPrice(parseNumberValue(trade.buy_price), getTradeTargetPct(trade));
+  return getTargetPrice(parseNumberValue(trade.buy_price), getTradeTargetPct(trade), trade.direction);
 }
 
 function getTradeUsedStop(trade) {
   const stored = parseNumberValue(trade.used_stop);
   if (stored !== null) return Math.abs(stored);
-  const riskPerShare = getRiskPerShare(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss));
+  const riskPerShare = getRiskPerShare(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss), trade.direction);
   const shares = parseNumberValue(trade.shares);
   if (riskPerShare === null || shares === null) return 0;
   return Math.abs(riskPerShare * shares);
@@ -1748,7 +1776,7 @@ function getCurrentReportMonth() {
 
 function getSellFieldsError(sellPrice, sellDate) {
   if (!hasPartialSellInfo(sellPrice, sellDate)) return '';
-  return sellPrice === null ? '填写卖出日期时，也请填写卖出价' : '填写卖出价时，也请填写卖出日期';
+  return sellPrice === null ? '填写平仓日期时，也请填写平仓价' : '填写平仓价时，也请填写平仓日期';
 }
 
 function getTradeStatusMeta(trade) {
@@ -1756,7 +1784,7 @@ function getTradeStatusMeta(trade) {
   const sellPrice = parseNumberValue(trade.sell_price);
   const sellDate = trade.sell_date || '';
   if (hasPartialSellInfo(sellPrice, sellDate)) {
-    return { label: '待补卖出', className: 'partial' };
+    return { label: '待补平仓', className: 'partial' };
   }
   if (!isTradeClosed(trade)) {
     return { label: '持仓中', className: 'open' };
@@ -1767,19 +1795,24 @@ function getTradeStatusMeta(trade) {
   return { label: '亏损', className: 'loss' };
 }
 
-function getBuyRating(buyPrice, dayHigh, dayLow) {
-  if (buyPrice === null || dayHigh === null || dayLow === null || dayHigh === dayLow) return null;
-  return (dayHigh - buyPrice) / (dayHigh - dayLow) * 100;
+function getBuyRating(entryPrice, dayHigh, dayLow, direction = 'long') {
+  if (entryPrice === null || dayHigh === null || dayLow === null || dayHigh === dayLow) return null;
+  return normalizeDirection(direction) === 'short'
+    ? (entryPrice - dayLow) / (dayHigh - dayLow) * 100
+    : (dayHigh - entryPrice) / (dayHigh - dayLow) * 100;
 }
 
-function getSellRating(sellPrice, sellHigh, sellLow) {
-  if (sellPrice === null || sellHigh === null || sellLow === null || sellHigh === sellLow) return null;
-  return (sellPrice - sellLow) / (sellHigh - sellLow) * 100;
+function getSellRating(exitPrice, sellHigh, sellLow, direction = 'long') {
+  if (exitPrice === null || sellHigh === null || sellLow === null || sellHigh === sellLow) return null;
+  return normalizeDirection(direction) === 'short'
+    ? (sellHigh - exitPrice) / (sellHigh - sellLow) * 100
+    : (exitPrice - sellLow) / (sellHigh - sellLow) * 100;
 }
 
 function getJournalSearchText(trade) {
   return [
     trade.stock,
+    getDirectionLabel(trade.direction),
     trade.stop_reason,
     trade.sell_reason,
     trade.review
@@ -1978,9 +2011,9 @@ function resetCaptureModeText() {
   const cancelBtn = document.getElementById('captureCancelBtn');
   if (!modePill || !title || !subtitle || !cancelBtn) return;
   if (editingTrade) {
-    modePill.textContent = `Edit Mode • ${editingTrade.stock || 'Trade'}`;
-    title.textContent = `正在编辑 ${editingTrade.stock || '这笔交易'}`;
-    subtitle.textContent = '这是一页完整编辑页，买入信息、通道高低点、卖出记录和复盘都可以随时回来修改。';
+    modePill.textContent = `Edit Mode • ${editingTrade.stock || 'Trade'} • ${getDirectionLabel(editingTrade.direction)}`;
+    title.textContent = `正在编辑 ${editingTrade.stock || '这笔交易'} · ${getDirectionLabel(editingTrade.direction)}`;
+    subtitle.textContent = '这是一页完整编辑页，入场信息、通道高低点、平仓记录和复盘都可以随时回来修改。';
     cancelBtn.style.display = 'inline-flex';
     document.getElementById('captureSaveBtn').textContent = '保存修改';
   } else {
@@ -1996,6 +2029,7 @@ function computeCapture() {
   const s = getSettings();
   const total = s.total;
   const maxLoss = total * (s.singleStop / 100);
+  const direction = normalizeDirection(document.getElementById('f_direction')?.value);
   const buyPrice = getNumberInputValue('f_buyPrice');
   const stopLoss = getNumberInputValue('f_stopLoss');
   const sharesRaw = getNumberInputValue('f_shares');
@@ -2007,14 +2041,14 @@ function computeCapture() {
   const sellDate = document.getElementById('f_sellDate').value || '';
   const buyComm = getCommissionValue(getNumberInputValue('f_buyComm'), 1);
   const sellComm = getCommissionValue(getNumberInputValue('f_sellComm'), hasCompleteSellInfo(sellPrice, sellDate) ? 1 : 0);
-  const targetPrice = getTargetPrice(buyPrice, targetPct);
-  const stopStatus = getStopStatus(buyPrice, stopLoss);
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
-  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  const targetPrice = getTargetPrice(buyPrice, targetPct, direction);
+  const stopStatus = getStopStatus(buyPrice, stopLoss, direction);
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss, direction);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss, direction);
   const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
-  const buyRating = getBuyRating(buyPrice, dayHigh, dayLow);
+  const buyRating = getBuyRating(buyPrice, dayHigh, dayLow, direction);
   const livePnl = hasCompleteSellInfo(sellPrice, sellDate)
-    ? calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares), buyComm, sellComm)
+    ? calculateNetPnl(calculateGrossPnl(buyPrice, sellPrice, shares, direction), buyComm, sellComm)
     : null;
 
   const stopStateEl = document.getElementById('calcStopState');
@@ -2102,11 +2136,11 @@ function computeCapture() {
     }
   }
 
-  updateRecommendedShareButtons(recommendedShares, buyPrice, stopLoss);
+  updateRecommendedShareButtons(recommendedShares, buyPrice, stopLoss, direction);
 }
 
-function updateRecommendedShareButtons(recommendedShares, buyPrice = null, stopLoss = null) {
-  const stopStatus = getStopStatus(buyPrice, stopLoss);
+function updateRecommendedShareButtons(recommendedShares, buyPrice = null, stopLoss = null, direction = 'long') {
+  const stopStatus = getStopStatus(buyPrice, stopLoss, direction);
   ['fillSharesBtn', 'fillSharesInlineBtn'].forEach((id) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -2124,17 +2158,18 @@ function updateRecommendedShareButtons(recommendedShares, buyPrice = null, stopL
 
 function applyRecommendedShares() {
   const s = getSettings();
+  const direction = normalizeDirection(document.getElementById('f_direction')?.value);
   const buyPrice = getNumberInputValue('f_buyPrice');
   const stopLoss = getNumberInputValue('f_stopLoss');
   const maxLoss = s.total * (s.singleStop / 100);
-  const stopStatus = getStopStatus(buyPrice, stopLoss);
-  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss);
+  const stopStatus = getStopStatus(buyPrice, stopLoss, direction);
+  const recommendedShares = getRecommendedShares(maxLoss, buyPrice, stopLoss, direction);
   if (recommendedShares === null || recommendedShares <= 0) {
     if (stopStatus?.type === 'breakeven' || stopStatus?.type === 'locked') {
       showAlert('captureAlert', '当前止损已在保本或锁盈位置，不需要推荐股数。', 'warn');
       return;
     }
-    showAlert('captureAlert', '请先填写有效的买入价、止损价和总资金，才能自动填入建议股数。', 'warn');
+    showAlert('captureAlert', '请先填写有效的入场价、止损价和总资金，才能自动填入建议股数。', 'warn');
     return;
   }
   const sharesInput = document.getElementById('f_shares');
@@ -2171,7 +2206,7 @@ function insertReviewTemplate(kind) {
 
 function clearCaptureForm() {
   [
-    'f_stock', 'f_buyDate', 'f_buyPrice', 'f_stopLoss', 'f_stopReason',
+    'f_stock', 'f_direction', 'f_buyDate', 'f_buyPrice', 'f_stopLoss', 'f_stopReason',
     'f_dayHigh', 'f_dayLow', 'f_targetPct', 'f_targetPrice', 'f_shares',
     'f_chanHigh', 'f_chanLow', 'f_buyComm', 'f_sellComm',
     'f_sellDate', 'f_sellPrice', 'f_sellHigh', 'f_sellLow', 'f_sellReason',
@@ -2180,6 +2215,7 @@ function clearCaptureForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  document.getElementById('f_direction').value = 'long';
   document.getElementById('f_buyDate').value = getLocalDateStamp();
   document.getElementById('f_buyComm').value = '1';
   document.getElementById('f_sellComm').value = '';
@@ -2203,6 +2239,7 @@ function startNewTrade() {
 function populateCaptureForm(trade) {
   editingId = trade.id;
   document.getElementById('f_stock').value = trade.stock || '';
+  document.getElementById('f_direction').value = normalizeDirection(trade.direction);
   document.getElementById('f_buyDate').value = trade.buy_date || '';
   document.getElementById('f_buyPrice').value = formatInputNumber(trade.buy_price);
   document.getElementById('f_stopLoss').value = formatInputNumber(trade.stop_loss);
@@ -2248,23 +2285,25 @@ function continueEditing() {
 
 function getCapturePayload() {
   const stock = document.getElementById('f_stock').value.trim().toUpperCase();
+  const direction = normalizeDirection(document.getElementById('f_direction')?.value);
   const buyPrice = getNumberInputValue('f_buyPrice');
   const stopLoss = getNumberInputValue('f_stopLoss');
   const sharesRaw = getNumberInputValue('f_shares');
   const shares = sharesRaw !== null ? Math.floor(sharesRaw) : null;
   const targetPct = parseTargetPctInput(getNumberInputValue('f_targetPct'));
-  const targetPrice = getTargetPrice(buyPrice, targetPct);
+  const targetPrice = getTargetPrice(buyPrice, targetPct, direction);
   const sellPrice = getNumberInputValue('f_sellPrice');
   const sellDate = document.getElementById('f_sellDate').value || null;
   const isClosed = hasCompleteSellInfo(sellPrice, sellDate);
   const buyComm = getCommissionValue(getNumberInputValue('f_buyComm'), 1);
   const sellComm = getCommissionValue(getNumberInputValue('f_sellComm'), isClosed ? 1 : 0);
-  const riskPerShare = getRiskPerShare(buyPrice, stopLoss);
+  const riskPerShare = getRiskPerShare(buyPrice, stopLoss, direction);
   const usedStop = riskPerShare !== null && shares !== null ? riskPerShare * shares : null;
-  const grossPnl = isClosed ? calculateGrossPnl(buyPrice, sellPrice, shares) : null;
+  const grossPnl = isClosed ? calculateGrossPnl(buyPrice, sellPrice, shares, direction) : null;
   const pnlNet = isClosed ? calculateNetPnl(grossPnl, buyComm, sellComm) : null;
   return {
     stock,
+    direction,
     buyPrice,
     stopLoss,
     shares,
@@ -2292,10 +2331,13 @@ function getCapturePayload() {
 
 function validateCapturePayload(payload) {
   if (!payload.stock || payload.buyPrice === null || payload.stopLoss === null || payload.shares === null) {
-    return '请填写必填项：股票代码、买入价、止损价、股数。';
+    return '请填写必填项：股票代码、方向、入场价、止损价、股数。';
   }
-  if (payload.buyPrice <= 0) return '买入价必须大于 0。';
+  if (payload.buyPrice <= 0) return '入场价必须大于 0。';
   if (payload.shares <= 0) return '股数必须大于 0。';
+  if (normalizeDirection(payload.direction) === 'short' && payload.targetPct !== null && payload.targetPct > 100) {
+    return '做空的目标盈利比例不能大于 100%。';
+  }
   const sellFieldsError = getSellFieldsError(payload.sellPrice, payload.sellDate);
   if (sellFieldsError) return sellFieldsError;
   return '';
@@ -2304,6 +2346,7 @@ function validateCapturePayload(payload) {
 function toRow(trade) {
   return {
     stock: trade.stock,
+    direction: normalizeDirection(trade.direction),
     buy_price: trade.buyPrice,
     shares: trade.shares,
     stop_loss: trade.stopLoss,
@@ -2327,6 +2370,15 @@ function toRow(trade) {
     pnl: trade.pnl ?? null,
     pnl_net: trade.pnlNet ?? null
   };
+}
+
+function isMissingColumnError(error, columnName) {
+  const text = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`;
+  return /column/i.test(text) && new RegExp(columnName, 'i').test(text);
+}
+
+function getDirectionColumnMigrationMessage() {
+  return `当前 Supabase 的 ${DB_TABLE} 表缺少 direction 字段。请先执行：alter table public.${DB_TABLE} add column if not exists direction text not null default 'long';`;
 }
 
 async function loadTrades() {
@@ -2355,14 +2407,31 @@ async function loadTrades() {
 }
 
 async function insertTrade(trade) {
-  const { data, error } = await sbClient.from(DB_TABLE).insert([toRow(trade)]).select().single();
-  if (error) throw error;
-  trades.unshift(data);
+  const row = toRow(trade);
+  let result = await sbClient.from(DB_TABLE).insert([row]).select().single();
+  if (result.error && isMissingColumnError(result.error, 'direction')) {
+    if (normalizeDirection(trade.direction) === 'short') {
+      throw new Error(getDirectionColumnMigrationMessage());
+    }
+    const fallbackRow = { ...row };
+    delete fallbackRow.direction;
+    result = await sbClient.from(DB_TABLE).insert([fallbackRow]).select().single();
+  }
+  if (result.error) throw result.error;
+  trades.unshift(result.data);
 }
 
 async function updateTradeInDb(id, updates) {
-  const { error } = await sbClient.from(DB_TABLE).update(updates).eq('id', id);
-  if (error) throw error;
+  let result = await sbClient.from(DB_TABLE).update(updates).eq('id', id);
+  if (result.error && isMissingColumnError(result.error, 'direction')) {
+    if (normalizeDirection(updates.direction) === 'short') {
+      throw new Error(getDirectionColumnMigrationMessage());
+    }
+    const fallbackUpdates = { ...updates };
+    delete fallbackUpdates.direction;
+    result = await sbClient.from(DB_TABLE).update(fallbackUpdates).eq('id', id);
+  }
+  if (result.error) throw result.error;
 }
 
 async function deleteTradeInDb(id) {
@@ -2430,6 +2499,7 @@ async function deleteTrade(id) {
 }
 
 function getTradeCardHtml(trade, compact = false) {
+  const direction = normalizeDirection(trade.direction);
   const status = getTradeStatusMeta(trade);
   const buyPrice = parseNumberValue(trade.buy_price);
   const stopLoss = parseNumberValue(trade.stop_loss);
@@ -2437,9 +2507,9 @@ function getTradeCardHtml(trade, compact = false) {
   const targetPrice = getTradeTargetPrice(trade);
   const usedStop = getTradeUsedStop(trade);
   const pnlNet = getTradeNetPnl(trade);
-  const stopStatus = getStopStatus(buyPrice, stopLoss);
-  const buyRating = getBuyRating(buyPrice, parseNumberValue(trade.day_high), parseNumberValue(trade.day_low));
-  const sellRating = getSellRating(parseNumberValue(trade.sell_price), parseNumberValue(trade.sell_high), parseNumberValue(trade.sell_low));
+  const stopStatus = getStopStatus(buyPrice, stopLoss, direction);
+  const buyRating = getBuyRating(buyPrice, parseNumberValue(trade.day_high), parseNumberValue(trade.day_low), direction);
+  const sellRating = getSellRating(parseNumberValue(trade.sell_price), parseNumberValue(trade.sell_high), parseNumberValue(trade.sell_low), direction);
   const stopText = stopStatus?.type === 'breakeven'
     ? '已保本'
     : stopStatus?.type === 'locked'
@@ -2463,8 +2533,9 @@ function getTradeCardHtml(trade, compact = false) {
         <div class="trade-title">
           <div class="trade-stock">
             <strong>${escapeHtml(trade.stock || '—')}</strong>
+            <span class="badge open">${escapeHtml(getDirectionLabel(direction))}</span>
             <span class="badge ${status.className}">${escapeHtml(status.label)}</span>
-            <small class="mono">买入 ${escapeHtml(trade.buy_date || '未填')} ${trade.sell_date ? `· 卖出 ${escapeHtml(trade.sell_date)}` : ''}</small>
+            <small class="mono">入场 ${escapeHtml(trade.buy_date || '未填')} ${trade.sell_date ? `· 平仓 ${escapeHtml(trade.sell_date)}` : ''}</small>
           </div>
           <div class="muted" style="font-size:13px;line-height:1.7">${escapeHtml(trade.stop_reason || '未填写交易方法 / 止损依据')}</div>
         </div>
@@ -2472,12 +2543,13 @@ function getTradeCardHtml(trade, compact = false) {
       </div>
 
       <div class="trade-meta">
-        <div class="meta-cell"><span>买入 / 止损</span><strong>${formatCurrency(buyPrice, 3)} / ${formatCurrency(stopLoss, 3)}</strong></div>
+        <div class="meta-cell"><span>方向 / 入场</span><strong>${escapeHtml(getDirectionLabel(direction))} / ${formatCurrency(buyPrice, 3)}</strong></div>
+        <div class="meta-cell"><span>止损价</span><strong>${formatCurrency(stopLoss, 3)}</strong></div>
         <div class="meta-cell"><span>止损状态</span><strong>${stopText}</strong></div>
         <div class="meta-cell"><span>目标价</span><strong>${targetPrice !== null ? formatCurrency(targetPrice, 3) : '—'}</strong></div>
         <div class="meta-cell"><span>股数</span><strong>${shares !== null ? formatShares(shares) : '—'}</strong></div>
         <div class="meta-cell"><span>占用止损</span><strong>${usedStopText}</strong></div>
-        <div class="meta-cell"><span>评级</span><strong>${buyRating !== null ? `买入 ${formatPercent(buyRating, 0)}` : '买入 —'}${sellRating !== null ? ` / 卖出 ${formatPercent(sellRating, 0)}` : ''}</strong></div>
+        <div class="meta-cell"><span>评级</span><strong>${buyRating !== null ? `入场 ${formatPercent(buyRating, 0)}` : '入场 —'}${sellRating !== null ? ` / 平仓 ${formatPercent(sellRating, 0)}` : ''}</strong></div>
       </div>
 
       <div class="trade-notes">
@@ -2623,7 +2695,7 @@ function renderHero() {
   if (focusList) {
     focusList.innerHTML = focusTrades.length ? focusTrades.map((trade) => {
       const status = getTradeStatusMeta(trade);
-      const stopStatus = getStopStatus(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss));
+      const stopStatus = getStopStatus(parseNumberValue(trade.buy_price), parseNumberValue(trade.stop_loss), trade.direction);
       const stopHint = stopStatus?.type === 'locked'
         ? '已锁盈'
         : stopStatus?.type === 'breakeven'
@@ -2632,7 +2704,7 @@ function renderHero() {
       return `
         <div class="hero-focus-item">
           <div class="hero-focus-copy">
-            <strong>${escapeHtml(trade.stock || '—')} · ${escapeHtml(status.label)}</strong>
+            <strong>${escapeHtml(trade.stock || '—')} · ${escapeHtml(getDirectionLabel(trade.direction))} · ${escapeHtml(status.label)}</strong>
             <span>${escapeHtml(trade.buy_date || '未填日期')} · ${escapeHtml(stopHint)} · ${escapeHtml(trade.stop_reason || '未写交易方法')}</span>
           </div>
           <button class="btn btn-secondary" onclick="editTrade('${escapeHtml(trade.id)}')">编辑</button>
@@ -2643,10 +2715,10 @@ function renderHero() {
 
   const editingTrade = trades.find((trade) => sameId(trade.id, editingId));
   if (continueBtn) continueBtn.style.display = editingTrade ? 'inline-flex' : 'none';
-  if (continueBtn) continueBtn.textContent = editingTrade ? `继续编辑 ${editingTrade.stock || '当前交易'}` : '继续当前编辑';
+  if (continueBtn) continueBtn.textContent = editingTrade ? `继续编辑 ${editingTrade.stock || '当前交易'} · ${getDirectionLabel(editingTrade.direction)}` : '继续当前编辑';
   if (editState) {
     editState.textContent = editingTrade
-      ? `你当前正在编辑 ${editingTrade.stock || '一笔交易'}，可以直接继续，不需要重新去日志页寻找。`
+      ? `你当前正在编辑 ${editingTrade.stock || '一笔交易'} 的${getDirectionLabel(editingTrade.direction)}计划，可以直接继续，不需要重新去日志页寻找。`
       : '这里保留最常用的两个入口，避免来回切页面。';
   }
 
